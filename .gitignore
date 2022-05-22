@@ -74,3 +74,6 @@ node_modules/
 
 # Compiled JavaScript files
 functions/lib/
+
+# Service Account Key
+serviceAccountKey.json

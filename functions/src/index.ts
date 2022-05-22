@@ -1,15 +1,28 @@
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+
 import * as anchor from "@project-serum/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { Program, AnchorProvider, Wallet } from "@project-serum/anchor";
 import { IDL } from "../../target/types/shared_ledger";
+
 import * as Base64 from "crypto-js/enc-base64";
 import * as sha256 from "crypto-js/sha256";
 import * as bs58 from "bs58";
 import { v4 as uuidv4 } from "uuid";
 
-// Start writing Firebase Functions
-// https://firebase.google.com/docs/functions/typescript
+import * as serviceAccount from "../serviceAccountKey.json";
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+});
+
+const firestore = admin.firestore();
+
+const credentialsDB = firestore
+  .collection("app")
+  .doc("shared_ledger")
+  .collection("credentials");
 
 const opts: any = {
   preflightCommitment: "processed",
@@ -37,33 +50,58 @@ const signedTransactionDataFilter = (encryptedData: string) => ({
     offset:
       8 + // Discriminator.
       32 + // Owner public key.
-      1, // Type
+      1 + // Type
+      4, // Array Length
     bytes: bs58.encode(Buffer.from(encryptedData)),
+  },
+});
+
+const errorFormat = (message: string) => ({
+  error: {
+    message,
   },
 });
 
 export const verifyTransaction = functions.https.onRequest(
   async (request, response) => {
+    const { pubkey, data, uuid } = request.body;
+    const hashedEmail = Base64.stringify(sha256(uuid + data));
+
+    if (!pubkey || !data || !uuid) {
+      response.status(400).send(errorFormat("Missing valid parameter"));
+    }
+
     const program = new Program(
       IDL,
       "27b22Rj4yVNXM1vEdh65LJ2HsfbmWwBeoncMEFd14bhL",
       getProvider()
     );
-    const { pubkey, data, uuid } = request.body;
-
-    const hashedEmail = Base64.stringify(sha256(uuid + data));
-    console.log(pubkey);
-    console.log(hashedEmail);
 
     const notifCrendentials = await program.account.contentCredential.all([
       signedTransactionOwnerFilter(new PublicKey(pubkey)),
       signedTransactionDataFilter(hashedEmail),
     ]);
-    functions.logger.info("5");
-    // console.log(notifCrendentials);
 
-    // functions.logger.info("Hello logs!", { structuredData: true });
-    response.send(notifCrendentials);
+    if (notifCrendentials.length > 0) {
+      switch (Object.keys(notifCrendentials[0].account.content)[0]) {
+        case "email":
+          credentialsDB.doc(notifCrendentials[0].publicKey.toString()).set(
+            {
+              email: data,
+            },
+            { merge: true }
+          );
+          response.sendStatus(201);
+          break;
+        default:
+          response.status(500).send(errorFormat("Credential type not found"));
+          break;
+      }
+    } else {
+      response
+        .status(500)
+        .send(errorFormat("No signed rendential found on chain"));
+    }
   }
 );
 
@@ -84,7 +122,7 @@ export const createTransaction = functions.https.onRequest(
       "processed"
     );
 
-    const data = "marcetienne.dartus@gmail.com";
+    const data = "jean.bon@gmail.com";
     const uuid = uuidv4();
 
     const hashedEmail = Base64.stringify(sha256(uuid + data));
