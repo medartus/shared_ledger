@@ -8,9 +8,10 @@ import { IDL } from "../../target/types/shared_ledger";
 
 import * as Base64 from "crypto-js/enc-base64";
 import * as sha256 from "crypto-js/sha256";
-import * as bs58 from "bs58";
 import { v4 as uuidv4 } from "uuid";
+import * as bs58 from "bs58";
 
+import { MailProvider } from "./mailProvider";
 import * as serviceAccount from "../serviceAccountKey.json";
 
 admin.initializeApp({
@@ -100,8 +101,22 @@ export const verifyTransaction = functions.https.onRequest(
     } else {
       response
         .status(500)
-        .send(errorFormat("No signed rendential found on chain"));
+        .send(errorFormat("No signed crendential found on chain"));
     }
+  }
+);
+
+export const sendNotification = functions.https.onRequest(
+  async (request, response) => {
+    const mailProvider = new MailProvider();
+
+    mailProvider
+      .sendWelcomeEmail("marcetienne.dartus@gmail.com", "Markitanki")
+      .then(() => response.sendStatus(200))
+      .catch((err) => {
+        functions.logger.error(err);
+        response.sendStatus(500);
+      });
   }
 );
 
