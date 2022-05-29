@@ -77,3 +77,6 @@ functions/lib/
 
 # Service Account Key
 serviceAccountKey.json
+
+# Function local runtime vars
+.runtimeconfig.json
