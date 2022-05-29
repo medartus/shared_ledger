@@ -80,3 +80,13 @@ serviceAccountKey.json
 
 # Function local runtime vars
 .runtimeconfig.json
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
