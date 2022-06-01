@@ -6,12 +6,29 @@ import Base64 from "crypto-js/enc-base64";
 import { PublicKey } from "@solana/web3.js";
 import { assert } from "chai";
 import { v4 as uuidv4 } from "uuid";
+import BN from "bn.js";
+
+class PDA {
+  constructor(program) {
+    this.programId = program.programId;
+  }
+  programId: PublicKey;
+
+  getTransfer = (transferUuid: anchor.web3.PublicKey) => {
+    return PublicKey.findProgramAddress(
+      [anchor.utils.bytes.utf8.encode("transfer"), transferUuid.toBuffer()],
+      this.programId
+    );
+  };
+}
 
 describe("anchor-escrow", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.SharedLedger as Program<SharedLedger>;
   const { provider } = program;
+
+  const pda = new PDA(program);
 
   const payer = anchor.web3.Keypair.generate();
   const receiver = anchor.web3.Keypair.generate();
@@ -42,51 +59,73 @@ describe("anchor-escrow", () => {
     console.log(await provider.connection.getBalance(emailOwner.publicKey));
   });
 
-  it("Send money", async () => {
-    // Sending money to a receiver.
+  // it("Configure Email", async () => {
+  //   const email = "marcetienne.dartus@gmail.com";
+  //   const uuid = uuidv4();
+
+  //   const hashedEmail = Base64.stringify(sha256(uuid + email));
+
+  //   console.log(
+  //     await provider.connection.getBalance(program.provider.wallet.publicKey)
+  //   );
+  //   const tx = await program.methods
+  //     .createNotificationCredential({ email: null }, hashedEmail)
+  //     .accounts({
+  //       author: emailOwner.publicKey,
+  //       systemProgram: anchor.web3.SystemProgram.programId,
+  //     })
+  //     .signers([emailOwner])
+  //     .rpc();
+
+  //   // console.log(await provider.connection.getTransaction(tx));
+  //   const notifCrendentials = await program.account.contentCredential.all();
+  //   console.log(notifCrendentials);
+  //   console.log(await provider.connection.getBalance(emailOwner.publicKey));
+  //   console.log(
+  //     await provider.connection.getBalance(program.provider.wallet.publicKey)
+  //   );
+  //   console.log(
+  //     await program.account.contentCredential.fetch(
+  //       notifCrendentials[0].publicKey
+  //     )
+  //   );
+  // });
+
+  it("Create Transfer Request", async () => {
+    const topic = "Another Ledger";
+    const amount = 42;
+    const transferUUid = receiver.publicKey;
+
+    const [transferPDA, _] = await pda.getTransfer(transferUUid);
+
     const tx = await program.methods
-      .transferNativeSol()
+      .createTransferRequest(receiver.publicKey, topic, new BN(amount))
       .accounts({
-        from: payer.publicKey,
-        to: receiver.publicKey,
+        requester: receiver.publicKey,
+        payer: payer.publicKey,
+        transfer: transferPDA,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
-      .signers([payer])
+      .signers([receiver])
       .rpc();
 
-    console.log(await provider.connection.getBalance(payer.publicKey));
-    console.log(await provider.connection.getBalance(receiver.publicKey));
+    const transfers = await program.account.transfer.all();
+    console.log(JSON.stringify(transfers, null, 4));
   });
 
-  it("Configure Email", async () => {
-    const email = "marcetienne.dartus@gmail.com";
-    const uuid = uuidv4();
+  // it("Send money", async () => {
+  //   // Sending money to a receiver.
+  //   const tx = await program.methods
+  //     .transferNativeSol()
+  //     .accounts({
+  //       from: payer.publicKey,
+  //       to: receiver.publicKey,
+  //       systemProgram: anchor.web3.SystemProgram.programId,
+  //     })
+  //     .signers([payer])
+  //     .rpc();
 
-    const hashedEmail = Base64.stringify(sha256(uuid + email));
-
-    console.log(
-      await provider.connection.getBalance(program.provider.wallet.publicKey)
-    );
-    const tx = await program.methods
-      .createNotificationCredential({ email: null }, hashedEmail)
-      .accounts({
-        author: emailOwner.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      })
-      .signers([emailOwner])
-      .rpc();
-
-    // console.log(await provider.connection.getTransaction(tx));
-    const notifCrendentials = await program.account.contentCredential.all();
-    console.log(notifCrendentials);
-    console.log(await provider.connection.getBalance(emailOwner.publicKey));
-    console.log(
-      await provider.connection.getBalance(program.provider.wallet.publicKey)
-    );
-    console.log(
-      await program.account.contentCredential.fetch(
-        notifCrendentials[0].publicKey
-      )
-    );
-  });
+  //   console.log(await provider.connection.getBalance(payer.publicKey));
+  //   console.log(await provider.connection.getBalance(receiver.publicKey));
+  // });
 });
