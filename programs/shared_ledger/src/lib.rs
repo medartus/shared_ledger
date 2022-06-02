@@ -55,6 +55,8 @@ pub mod shared_ledger {
     pub fn execute_transfer_request(ctx: Context<ExecuteTransferRequest>, _uuid: Pubkey) -> Result<()> {
         let transfer_request: &mut Account<Transfer> = &mut ctx.accounts.transfer;
 
+        CheckIfTransferAlreadyProcessed(transfer_request)?;
+
         transfer_request.events[1] = TransactionEvent {
             timestamp: Clock::get()?.unix_timestamp,
             event_type: TransactionEventType::TRANSFER,
@@ -80,6 +82,8 @@ pub mod shared_ledger {
     pub fn cancel_transfer_request(ctx: Context<CancelTransferRequest>, _uuid: Pubkey) -> Result<()> {
         let transfer_request: &mut Account<Transfer> = &mut ctx.accounts.transfer;
         
+        CheckIfTransferAlreadyProcessed(transfer_request)?;
+
         transfer_request.events[1] = TransactionEvent {
             timestamp: Clock::get()?.unix_timestamp,
             event_type: TransactionEventType::CANCEL,
@@ -89,8 +93,24 @@ pub mod shared_ledger {
     }
 }
 
+
+pub fn CheckIfTransferAlreadyProcessed(transfer_request: &mut Account<Transfer>) -> Result<()> {
+    match transfer_request.events[1].event_type{
+      TransactionEventType::UNDEFINED => Ok(()),
+      TransactionEventType::CANCEL => Err(ErrorCode::CanceledTransfer.into()),
+      TransactionEventType::TRANSFER => Err(ErrorCode::ProcessedTransfer.into()),
+      _=> Err(ErrorCode::UnknownTransfer.into()),
+    }
+}
+
 #[error_code]
 pub enum ErrorCode {
+    #[msg("Can't process a canceled transfer request.")]
+    CanceledTransfer,
+    #[msg("Can't process again a transfer request.")]
+    ProcessedTransfer,
+    #[msg("Can't process an unkonwn processed transfer request.")]
+    UnknownTransfer,
     #[msg("The provided topic should be 50 characters long maximum.")]
     TopicTooLong,
     #[msg("The provided Hash should be 64 characters long maximum.")]
