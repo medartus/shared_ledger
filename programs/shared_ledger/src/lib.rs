@@ -1,7 +1,10 @@
 #![feature(derive_default_enum)]
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::program::{invoke};
+use anchor_lang::solana_program::{
+    clock::Clock,
+    program::{invoke}
+};
 use anchor_lang::solana_program::system_instruction::{transfer};
 
 declare_id!("27b22Rj4yVNXM1vEdh65LJ2HsfbmWwBeoncMEFd14bhL");
@@ -30,7 +33,7 @@ pub mod shared_ledger {
         let requester: &Signer = &ctx.accounts.requester;
         
         let transaction_event = TransactionEvent {
-            timestamp: 1,
+            timestamp: Clock::get()?.unix_timestamp,
             event_type: TransactionEventType::CREATION,
         };
 
@@ -50,8 +53,13 @@ pub mod shared_ledger {
     }
     
     pub fn execute_transfer_request(ctx: Context<ExecuteTransferRequest>, _uuid: Pubkey) -> Result<()> {
-        let transfer_request: &Account<Transfer> = &ctx.accounts.transfer;
+        let transfer_request: &mut Account<Transfer> = &mut ctx.accounts.transfer;
 
+        transfer_request.events[1] = TransactionEvent {
+            timestamp: Clock::get()?.unix_timestamp,
+            event_type: TransactionEventType::TRANSFER,
+        };
+        
         let sol_transfer = transfer(
             &transfer_request.from,
             &transfer_request.to,
@@ -65,6 +73,17 @@ pub mod shared_ledger {
                 ctx.accounts.system_program.clone(),
             ],
         )?;
+
+        Ok(())
+    }
+
+    pub fn cancel_transfer_request(ctx: Context<CancelTransferRequest>, _uuid: Pubkey) -> Result<()> {
+        let transfer_request: &mut Account<Transfer> = &mut ctx.accounts.transfer;
+        
+        transfer_request.events[1] = TransactionEvent {
+            timestamp: Clock::get()?.unix_timestamp,
+            event_type: TransactionEventType::CANCEL,
+        };
 
         Ok(())
     }
@@ -93,7 +112,35 @@ pub struct ExecuteTransferRequest <'info> {
         mut,
         constraint = transfer.from == *payer.key,
         constraint = transfer.to == *requester.key,
-        close = requester, 
+        // close = requester, 
+        seeds = [
+            b"transfer".as_ref(), 
+            uuid.as_ref()
+        ], 
+        bump,
+    )]
+    pub transfer: Account<'info, Transfer>,
+
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub system_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(uuid: Pubkey)]
+pub struct CancelTransferRequest <'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut, signer)]
+    pub requester: AccountInfo<'info>,
+
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub payer: AccountInfo<'info>,
+
+    #[account(
+        mut,
+        constraint = transfer.from == *payer.key,
+        constraint = transfer.to == *requester.key,
+        // close = requester, 
         seeds = [
             b"transfer".as_ref(), 
             uuid.as_ref()
@@ -141,7 +188,7 @@ pub struct CreateContentCredential<'info> {
         space = ContentCredential::LEN
     )]
     pub credential: Account<'info, ContentCredential>,
-    
+
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub system_program: AccountInfo<'info>,
 }
@@ -163,7 +210,7 @@ pub enum TransactionEventType  {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Clone, Copy)]
 pub struct TransactionEvent {
-    pub timestamp: u32,
+    pub timestamp: i64,
     pub event_type: TransactionEventType,
 }
 
@@ -188,14 +235,14 @@ pub struct ContentCredential {
 const DISCRIMINATOR_LENGTH: usize = 8;
 const PUBLIC_KEY_LENGTH: usize = 32;
 const STRING_LENGTH_PREFIX: usize = 4; // Stores the size of the string.
-const U32: usize = 4;
+const I64: usize = 8;
 const U64: usize = 8;
 const BUMP_LENGTH: usize = 1;
 
 impl TransactionEvent {
     const EVENT_TYPE_LENGTH: usize = 1;
 
-    const LEN: usize =  U32 // timestamp
+    const LEN: usize =  I64 // timestamp
     + TransactionEvent::EVENT_TYPE_LENGTH; // event_type
 }
 
