@@ -8,11 +8,16 @@ import { assert } from "chai";
 import { v4 as uuidv4 } from "uuid";
 import BN from "bn.js";
 
-class PDA {
-  constructor(program) {
-    this.programId = program.programId;
+class TestUtils {
+  program: anchor.Program<SharedLedger>;
+  programId: anchor.web3.PublicKey;
+  provider: anchor.Provider;
+
+  constructor() {
+    this.program = anchor.workspace.SharedLedger as Program<SharedLedger>;
+    this.programId = this.program.programId;
+    this.provider = this.program.provider;
   }
-  programId: PublicKey;
 
   getTransfer = (transferUuid: anchor.web3.PublicKey) => {
     return PublicKey.findProgramAddress(
@@ -20,86 +25,64 @@ class PDA {
       this.programId
     );
   };
+
+  requestAirdrop = async (pubkey: anchor.web3.PublicKey, amount = 10000000) => {
+    return this.provider.connection.confirmTransaction(
+      await this.provider.connection.requestAirdrop(pubkey, amount),
+      "processed"
+    );
+  };
+
+  getBalance = async (pubkey: anchor.web3.PublicKey) => {
+    return this.provider.connection.getBalance(pubkey);
+  };
 }
 
 describe("anchor-escrow", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.SharedLedger as Program<SharedLedger>;
-  const { provider } = program;
+  it("Configure Email", async () => {
+    const email = "marcetienne.dartus@gmail.com";
+    const uuid = uuidv4();
+    const hashedEmail = Base64.stringify(sha256(uuid + email));
 
-  const pda = new PDA(program);
+    const testUtils = new TestUtils();
+    const emailOwner = anchor.web3.Keypair.generate();
+    const credential = anchor.web3.Keypair.generate();
 
-  const payer = anchor.web3.Keypair.generate();
-  const receiver = anchor.web3.Keypair.generate();
-  const emailOwner = anchor.web3.Keypair.generate();
+    await testUtils.requestAirdrop(emailOwner.publicKey);
 
-  it("Initialize program state", async () => {
-    // Airdropping tokens to a payer.
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(payer.publicKey, 1000000000),
-      "processed"
-    );
+    await testUtils.program.methods
+      .createNotificationCredential({ email: null }, hashedEmail)
+      .accounts({
+        author: emailOwner.publicKey,
+        credential: credential.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([emailOwner, credential])
+      .rpc();
 
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(receiver.publicKey, 10000000),
-      "processed"
-    );
-
-    await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(
-        emailOwner.publicKey,
-        1000000000
-      ),
-      "processed"
-    );
-
-    console.log(await provider.connection.getBalance(payer.publicKey));
-    console.log(await provider.connection.getBalance(receiver.publicKey));
-    console.log(await provider.connection.getBalance(emailOwner.publicKey));
+    const notifCrendentials =
+      await testUtils.program.account.contentCredential.all();
+    console.log(notifCrendentials);
   });
-
-  // it("Configure Email", async () => {
-  //   const email = "marcetienne.dartus@gmail.com";
-  //   const uuid = uuidv4();
-
-  //   const hashedEmail = Base64.stringify(sha256(uuid + email));
-
-  //   console.log(
-  //     await provider.connection.getBalance(program.provider.wallet.publicKey)
-  //   );
-  //   const tx = await program.methods
-  //     .createNotificationCredential({ email: null }, hashedEmail)
-  //     .accounts({
-  //       author: emailOwner.publicKey,
-  //       systemProgram: anchor.web3.SystemProgram.programId,
-  //     })
-  //     .signers([emailOwner])
-  //     .rpc();
-
-  //   // console.log(await provider.connection.getTransaction(tx));
-  //   const notifCrendentials = await program.account.contentCredential.all();
-  //   console.log(notifCrendentials);
-  //   console.log(await provider.connection.getBalance(emailOwner.publicKey));
-  //   console.log(
-  //     await provider.connection.getBalance(program.provider.wallet.publicKey)
-  //   );
-  //   console.log(
-  //     await program.account.contentCredential.fetch(
-  //       notifCrendentials[0].publicKey
-  //     )
-  //   );
-  // });
 
   it("Create Transfer Request", async () => {
     const topic = "Another Ledger";
     const amount = 42;
-    const transferUUid = receiver.publicKey;
 
-    const [transferPDA, _] = await pda.getTransfer(transferUUid);
+    const testUtils = new TestUtils();
+    const payer = anchor.web3.Keypair.generate();
+    const receiver = anchor.web3.Keypair.generate();
+    const transferUuid = anchor.web3.Keypair.generate().publicKey;
 
-    const tx = await program.methods
-      .createTransferRequest(receiver.publicKey, topic, new BN(amount))
+    await testUtils.requestAirdrop(payer.publicKey);
+    await testUtils.requestAirdrop(receiver.publicKey);
+
+    const [transferPDA, _] = await testUtils.getTransfer(transferUuid);
+
+    await testUtils.program.methods
+      .createTransferRequest(transferUuid, topic, new BN(amount))
       .accounts({
         requester: receiver.publicKey,
         payer: payer.publicKey,
@@ -109,23 +92,87 @@ describe("anchor-escrow", () => {
       .signers([receiver])
       .rpc();
 
-    const transfers = await program.account.transfer.all();
+    const transfers = await testUtils.program.account.transfer.all();
     console.log(JSON.stringify(transfers, null, 4));
   });
 
-  // it("Send money", async () => {
-  //   // Sending money to a receiver.
-  //   const tx = await program.methods
-  //     .transferNativeSol()
-  //     .accounts({
-  //       from: payer.publicKey,
-  //       to: receiver.publicKey,
-  //       systemProgram: anchor.web3.SystemProgram.programId,
-  //     })
-  //     .signers([payer])
-  //     .rpc();
+  it("Send money", async () => {
+    const topic = "Another Ledger";
+    const amount = 42;
 
-  //   console.log(await provider.connection.getBalance(payer.publicKey));
-  //   console.log(await provider.connection.getBalance(receiver.publicKey));
-  // });
+    const testUtils = new TestUtils();
+    const payer = anchor.web3.Keypair.generate();
+    const receiver = anchor.web3.Keypair.generate();
+    const transferUuid = anchor.web3.Keypair.generate().publicKey;
+
+    await testUtils.requestAirdrop(payer.publicKey);
+    await testUtils.requestAirdrop(receiver.publicKey);
+
+    const [transferPDA, _] = await testUtils.getTransfer(transferUuid);
+
+    await testUtils.program.methods
+      .createTransferRequest(transferUuid, topic, new BN(amount))
+      .accounts({
+        requester: receiver.publicKey,
+        payer: payer.publicKey,
+        transfer: transferPDA,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([receiver])
+      .rpc();
+
+    await testUtils.program.methods
+      .executeTransferRequest(transferUuid)
+      .accounts({
+        requester: receiver.publicKey,
+        payer: payer.publicKey,
+        transfer: transferPDA,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([payer])
+      .rpc();
+
+    const transfers = await testUtils.program.account.transfer.all();
+    console.log(JSON.stringify(transfers, null, 4));
+  });
+
+  it("Cancel transfer request  ", async () => {
+    const topic = "Another Ledger";
+    const amount = 42;
+
+    const testUtils = new TestUtils();
+    const payer = anchor.web3.Keypair.generate();
+    const receiver = anchor.web3.Keypair.generate();
+    const transferUuid = anchor.web3.Keypair.generate().publicKey;
+
+    await testUtils.requestAirdrop(payer.publicKey);
+    await testUtils.requestAirdrop(receiver.publicKey);
+
+    const [transferPDA, _] = await testUtils.getTransfer(transferUuid);
+
+    await testUtils.program.methods
+      .createTransferRequest(transferUuid, topic, new BN(amount))
+      .accounts({
+        requester: receiver.publicKey,
+        payer: payer.publicKey,
+        transfer: transferPDA,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([receiver])
+      .rpc();
+
+    await testUtils.program.methods
+      .executeTransferRequest(transferUuid)
+      .accounts({
+        requester: receiver.publicKey,
+        payer: payer.publicKey,
+        transfer: transferPDA,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([payer])
+      .rpc();
+
+    const transfers = await testUtils.program.account.transfer.all();
+    console.log(JSON.stringify(transfers, null, 4));
+  });
 });

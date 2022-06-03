@@ -209,8 +209,7 @@ pub struct CreateContentCredential<'info> {
     )]
     pub credential: Account<'info, ContentCredential>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account
-    pub system_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
