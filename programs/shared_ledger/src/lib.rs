@@ -37,6 +37,10 @@ pub mod shared_ledger {
             event_type: TransactionEventType::CREATION,
         };
 
+        if amount < 0 {
+            return Err(ErrorCode::NeedPositiveAmount.into())
+        }
+
         if topic.chars().count() > 50 {
             return Err(ErrorCode::TopicTooLong.into())
         }
@@ -55,7 +59,7 @@ pub mod shared_ledger {
     pub fn execute_transfer_request(ctx: Context<ExecuteTransferRequest>, _uuid: Pubkey) -> Result<()> {
         let transfer_request: &mut Account<Transfer> = &mut ctx.accounts.transfer;
 
-        CheckIfTransferAlreadyProcessed(transfer_request)?;
+        check_if_transfer_already_processed(transfer_request)?;
 
         transfer_request.events[1] = TransactionEvent {
             timestamp: Clock::get()?.unix_timestamp,
@@ -82,7 +86,7 @@ pub mod shared_ledger {
     pub fn cancel_transfer_request(ctx: Context<CancelTransferRequest>, _uuid: Pubkey) -> Result<()> {
         let transfer_request: &mut Account<Transfer> = &mut ctx.accounts.transfer;
         
-        CheckIfTransferAlreadyProcessed(transfer_request)?;
+        check_if_transfer_already_processed(transfer_request)?;
 
         transfer_request.events[1] = TransactionEvent {
             timestamp: Clock::get()?.unix_timestamp,
@@ -94,7 +98,7 @@ pub mod shared_ledger {
 }
 
 
-pub fn CheckIfTransferAlreadyProcessed(transfer_request: &mut Account<Transfer>) -> Result<()> {
+pub fn check_if_transfer_already_processed(transfer_request: &mut Account<Transfer>) -> Result<()> {
     match transfer_request.events[1].event_type{
       TransactionEventType::UNDEFINED => Ok(()),
       TransactionEventType::CANCEL => Err(ErrorCode::CanceledTransfer.into()),
@@ -105,16 +109,18 @@ pub fn CheckIfTransferAlreadyProcessed(transfer_request: &mut Account<Transfer>)
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Can't process a canceled transfer request.")]
+    #[msg("Can't process a canceled transfer request")]
     CanceledTransfer,
-    #[msg("Can't process again a transfer request.")]
+    #[msg("Can't process again a transfer request")]
     ProcessedTransfer,
-    #[msg("Can't process an unkonwn processed transfer request.")]
+    #[msg("Can't process an unkonwn processed transfer request")]
     UnknownTransfer,
-    #[msg("The provided topic should be 50 characters long maximum.")]
+    #[msg("The provided topic should be 50 characters long maximum")]
     TopicTooLong,
-    #[msg("The provided Hash should be 64 characters long maximum.")]
+    #[msg("The provided Hash should be 64 characters long maximum")]
     HashTooLong,
+    #[msg("The amount provided needs to be positive")]
+    NeedPositiveAmount,
 }
 
 #[derive(Accounts)]
