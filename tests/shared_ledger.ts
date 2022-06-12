@@ -387,14 +387,14 @@ describe("SharedLedger", () => {
 
       try {
         await testUtils.program.methods
-          .cancelTransferRequest(transferUuid)
+          .executeTransferRequest(transferUuid)
           .accounts({
             requester: receiver.publicKey,
             payer: payer.publicKey,
             transfer: transferPDA,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
-          .signers([receiver])
+          .signers([payer])
           .rpc();
       } catch (error) {
         assert.equal(error.error.errorCode.code, "ProcessedTransfer");
@@ -405,7 +405,6 @@ describe("SharedLedger", () => {
           .cancelTransferRequest(transferUuid)
           .accounts({
             requester: receiver.publicKey,
-            payer: payer.publicKey,
             transfer: transferPDA,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
@@ -459,7 +458,6 @@ describe("SharedLedger", () => {
         .cancelTransferRequest(transferUuid)
         .accounts({
           requester: receiver.publicKey,
-          payer: payer.publicKey,
           transfer: transferPDA,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
@@ -514,7 +512,6 @@ describe("SharedLedger", () => {
         .cancelTransferRequest(transferUuid)
         .accounts({
           requester: receiver.publicKey,
-          payer: payer.publicKey,
           transfer: transferPDA,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
@@ -523,14 +520,14 @@ describe("SharedLedger", () => {
 
       try {
         await testUtils.program.methods
-          .cancelTransferRequest(transferUuid)
+          .executeTransferRequest(transferUuid)
           .accounts({
             requester: receiver.publicKey,
             payer: payer.publicKey,
             transfer: transferPDA,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
-          .signers([receiver])
+          .signers([payer])
           .rpc();
       } catch (error) {
         assert.equal(error.error.errorCode.code, "CanceledTransfer");
@@ -541,7 +538,6 @@ describe("SharedLedger", () => {
           .cancelTransferRequest(transferUuid)
           .accounts({
             requester: receiver.publicKey,
-            payer: payer.publicKey,
             transfer: transferPDA,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
