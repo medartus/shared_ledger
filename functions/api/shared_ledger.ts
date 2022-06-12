@@ -10,7 +10,11 @@ const PROGRAM_ID = new PublicKey(
   "27b22Rj4yVNXM1vEdh65LJ2HsfbmWwBeoncMEFd14bhL"
 );
 
-const SOLANA_NETWORK = "http://127.0.0.1:8899";
+enum NETWORK {
+  LOCALHOST = "http://127.0.0.1:8899",
+  DEVNET = "https://api.devnet.solana.com",
+  MAINNET = "https://api.mainnet-beta.solana.com",
+}
 
 const signedTransactionOwnerFilter = (pubkey: PublicKey) => ({
   memcmp: {
@@ -51,12 +55,12 @@ export class SharedLedgerWrapper {
   }
 
   initialize = async () => {
-    const connection = new Connection(SOLANA_NETWORK, "processed");
+    const connection = new Connection(NETWORK.DEVNET.toString(), "processed");
     const program = await getProgram(this.wallet, connection, PROGRAM_ID, IDL);
     this.program = program as unknown as Program<SharedLedger>;
   };
 
-  getCredentials = (hashedEmail: string, pubkey: string) => {
+  getCredentials = (hashedEmail: string, pubkey: PublicKey) => {
     if (this.program && this.wallet) {
       return this.program.account.contentCredential.all([
         signedTransactionOwnerFilter(new PublicKey(pubkey)),
