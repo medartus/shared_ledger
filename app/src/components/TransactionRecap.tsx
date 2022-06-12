@@ -1,55 +1,47 @@
 import React, { FC } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
 import moment from 'moment';
-import BN from 'bn.js';
 
-import { TransactionEvent, TransferRequests } from '../lib/shared_ledger';
+import {
+  EventType,
+  parseEvents,
+  Transfer,
+  TransferAccount,
+} from '../lib/shared_ledger';
 
 type TransactionBubbleProps = {
-  eventType: object;
+  eventType: EventType;
 };
 
-const TransactionBubble: FC<TransactionBubbleProps> = ({ eventType }) => {
-  const eventString = Object.keys(eventType)[0];
-
-  console.log(eventString);
-
-  return <div className={`transaction-bubble bubble-${eventString}`} />;
-};
+const TransactionBubble: FC<TransactionBubbleProps> = ({ eventType }) => (
+  <div className={`transaction-bubble bubble-${eventType.toString()}`} />
+);
 
 type TransferProps = {
-  topic: string;
-  from: PublicKey;
-  to: PublicKey;
-  amount: BN;
-  events: TransactionEvent[];
+  transfer: TransferAccount;
   isSelected: boolean;
   onClick: () => void;
 };
 
-const Transfer: FC<TransferProps> = ({
-  topic,
-  from,
-  to,
-  amount,
-  events,
+const TransferRecap: FC<TransferProps> = ({
+  transfer,
   isSelected,
   onClick,
 }) => {
+  const { from, to, events, amount, topic } = transfer;
   const { publicKey } = useWallet();
   const isReceiver = to === publicKey;
   const stranegrWallet = (isReceiver ? from : to).toString();
   const stranegrWalletStart = stranegrWallet.substring(0, 6);
   const stranegrWalletEnd = stranegrWallet.substring(stranegrWallet.length - 6);
   const stranegrWalletText = `${stranegrWalletStart}...${stranegrWalletEnd}`;
+  const parsedEvents = parseEvents(events);
   const processedTrandsaction =
-    Object.keys(events[1].eventType)[0] !== 'undefined';
-  const eventToDsiplay = events[processedTrandsaction ? 1 : 0];
-  const date = new Date(eventToDsiplay.timestamp.toNumber() * 1000);
-  const formatedDate = moment(date).format('MMM Do YYYY');
+    parsedEvents[1].eventType !== EventType.UNDEFINED;
+  const eventToDsiplay = parsedEvents[processedTrandsaction ? 1 : 0];
+  const formatedDate = moment(eventToDsiplay.date).format('MMM Do YYYY');
 
-  const amountText = `${isReceiver ? '+' : '-'}${amount.toNumber()}◎`;
+  const amountText = `${isReceiver ? '+' : '-'}${amount.toNumber()} ◎`;
 
   console.log(isSelected);
 
@@ -77,9 +69,9 @@ const Transfer: FC<TransferProps> = ({
 };
 
 type TransactionsRecapProps = {
-  transfers: TransferRequests;
-  selectedTransfer: PublicKey | null;
-  onSelectTransfer: (selectedTransfer: PublicKey) => void;
+  transfers: Transfer[];
+  selectedTransfer: Transfer | null;
+  onSelectTransfer: (selectedTransfer: Transfer) => void;
 };
 
 const TransactionsRecap: FC<TransactionsRecapProps> = ({
@@ -88,21 +80,14 @@ const TransactionsRecap: FC<TransactionsRecapProps> = ({
   onSelectTransfer,
 }) => (
   <>
-    {transfers?.map((transfer) => {
-      const { topic, from, to, amount, events } = transfer.account;
-      return (
-        <Transfer
-          key={transfer.publicKey.toString()}
-          topic={topic}
-          from={from}
-          to={to}
-          amount={amount}
-          events={events as TransactionEvent[]}
-          isSelected={selectedTransfer === transfer.publicKey}
-          onClick={() => onSelectTransfer(transfer.publicKey)}
-        />
-      );
-    })}
+    {transfers?.map((transfer) => (
+      <TransferRecap
+        key={transfer.publicKey.toString()}
+        transfer={transfer.account as TransferAccount}
+        isSelected={selectedTransfer?.publicKey === transfer.publicKey}
+        onClick={() => onSelectTransfer(transfer)}
+      />
+    ))}
   </>
 );
 

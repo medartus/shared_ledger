@@ -31,8 +31,14 @@ const TransactionUuidFilter = (uuid: PublicKey) => ({
     bytes: bs58.encode(uuid.toBuffer()),
   },
 });
+const TransactionPayerFilter = (user: PublicKey) => ({
+  memcmp: {
+    offset: 8, // Discriminator.
+    bytes: bs58.encode(user.toBuffer()),
+  },
+});
 
-const TransactionUserFilter = (user: PublicKey) => ({
+const TransactionReceiverFilter = (user: PublicKey) => ({
   memcmp: {
     offset:
       8 + // Discriminator.
@@ -113,14 +119,13 @@ export class SharedLedgerWrapper {
     }
   };
 
-  cancelTransferRequest = async () => {
+  cancelTransferRequest = async (transfer: TransferAccount) => {
     if (this.program && this.wallet) {
-      const transferUuid = Keypair.generate().publicKey;
-
-      const [transferPDA] = await getTransferPDA(transferUuid);
+      const { uuid } = transfer;
+      const [transferPDA] = await getTransferPDA(uuid);
 
       await this.program.methods
-        .cancelTransferRequest(transferUuid)
+        .cancelTransferRequest(uuid)
         .accounts({
           requester: this.wallet.publicKey,
           transfer: transferPDA,
@@ -130,17 +135,16 @@ export class SharedLedgerWrapper {
     }
   };
 
-  executeTransferRequest = async (
-    requester: PublicKey,
-    transferUuid: PublicKey
-  ) => {
+  executeTransferRequest = async (transfer: TransferAccount) => {
     if (this.program && this.wallet) {
-      const [transferPDA] = await getTransferPDA(transferUuid);
+      const { uuid, to } = transfer;
+
+      const [transferPDA] = await getTransferPDA(uuid);
 
       await this.program.methods
-        .executeTransferRequest(transferUuid)
+        .executeTransferRequest(uuid)
         .accounts({
-          requester,
+          requester: to,
           payer: this.wallet.publicKey,
           transfer: transferPDA,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -149,30 +153,100 @@ export class SharedLedgerWrapper {
     }
   };
 
-  getTransferRequest = async () => {
-    if (this.program && this.wallet) {
-      return this.program.account.transfer.all([
-        TransactionUserFilter(this.wallet.publicKey),
-      ]);
-    }
-    return [];
-  };
+  getTransferRequest = (): Promise<Transfer[]> =>
+    new Promise((resolve) => {
+      if (this.program && this.wallet) {
+        Promise.all([
+          this.program.account.transfer.all([
+            TransactionPayerFilter(this.wallet.publicKey),
+          ]),
+          this.program.account.transfer.all([
+            TransactionReceiverFilter(this.wallet.publicKey),
+          ]),
+        ]).then((res) => {
+          console.log(res);
+          const transferList = [...res[0], ...res[1]] as Transfer[];
+          transferList.sort(
+            (a, b) =>
+              a.account.events[0].timestamp.toNumber() -
+              b.account.events[0].timestamp.toNumber()
+          );
+          console.log(transferList);
+          resolve(transferList);
+        });
+      } else {
+        resolve([]);
+      }
+    });
 
-  getTransferRequestfromUuid = async (transactionUuid: PublicKey) => {
+  getTransferRequestfromUuid = async (
+    transactionUuid: PublicKey
+  ): Promise<Transfer[]> => {
     if (this.program && this.wallet) {
       return this.program.account.transfer.all([
         TransactionUuidFilter(transactionUuid),
-      ]);
+      ]) as unknown as Transfer[];
     }
     return [];
   };
 }
 
-export type TransferRequests = Awaited<
-  ReturnType<typeof SharedLedgerWrapper.prototype.getTransferRequest>
->;
+export type Transfer = {
+  account: TransferAccount;
+  publicKey: PublicKey;
+};
+
+export type TransferAccount = {
+  from: PublicKey;
+  to: PublicKey;
+  uuid: PublicKey;
+  topic: string;
+  amount: BN;
+  events: TransactionEvent[];
+  bump: number;
+};
 
 export type TransactionEvent = {
   timestamp: BN;
   eventType: object;
 };
+
+export type TransactionEventParsed = {
+  date: Date;
+  eventType: EventType;
+};
+
+export enum EventType {
+  UNDEFINED = 'undefined',
+  CREATION = 'creation',
+  CANCEL = 'cancel',
+  TRANSFER = 'transfer',
+}
+
+const parseEvent = (event: TransactionEvent) => {
+  let eventType = EventType.UNDEFINED;
+
+  switch (Object.keys(event.eventType)[0]) {
+    case 'creation':
+      eventType = EventType.CREATION;
+      break;
+    case 'transfer':
+      eventType = EventType.TRANSFER;
+      break;
+    case 'cancel':
+      eventType = EventType.CANCEL;
+      break;
+    default:
+      break;
+  }
+
+  const date = new Date(event.timestamp.toNumber() * 1000);
+
+  return {
+    date,
+    eventType,
+  } as TransactionEventParsed;
+};
+
+export const parseEvents = (events: TransactionEvent[]) =>
+  events.map((event) => parseEvent(event));
