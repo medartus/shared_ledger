@@ -29,7 +29,6 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
   };
 
   const onCreateTransferRequest = async () => {
-    console.log('molo');
     await sharedLedgerWrapper.createTransferRequest(
       topic,
       parseInt(amount, 10),

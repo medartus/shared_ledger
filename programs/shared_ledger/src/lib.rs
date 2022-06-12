@@ -37,6 +37,10 @@ pub mod shared_ledger {
             event_type: TransactionEventType::CREATION,
         };
 
+        if *payer.key == *requester.key {
+            return Err(ErrorCode::SameAccountTransfer.into())
+        }
+
         if amount < 0 {
             return Err(ErrorCode::NeedPositiveAmount.into())
         }
@@ -115,6 +119,8 @@ pub enum ErrorCode {
     ProcessedTransfer,
     #[msg("Can't process an unkonwn processed transfer request")]
     UnknownTransfer,
+    #[msg("Can't create transfer request to the same account")]
+    SameAccountTransfer,
     #[msg("The provided topic should be 50 characters long maximum")]
     TopicTooLong,
     #[msg("The provided Hash should be 64 characters long maximum")]
@@ -158,13 +164,8 @@ pub struct CancelTransferRequest <'info> {
     #[account(mut, signer)]
     pub requester: AccountInfo<'info>,
 
-    /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut)]
-    pub payer: AccountInfo<'info>,
-
     #[account(
         mut,
-        constraint = transfer.from == *payer.key,
         constraint = transfer.to == *requester.key,
         // close = requester, 
         seeds = [
