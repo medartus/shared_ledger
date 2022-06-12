@@ -137,18 +137,20 @@ export const createTransaction = functions.https.onRequest(
       "processed"
     );
 
+    const credential = anchor.web3.Keypair.generate();
+
     const data = "jean.bon@gmail.com";
     const uuid = uuidv4();
-
     const hashedEmail = Base64.stringify(sha256(uuid + data));
 
     await program.methods
       .createNotificationCredential({ email: null }, hashedEmail)
       .accounts({
         author: emailOwner.publicKey,
+        credential: credential.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
-      .signers([emailOwner])
+      .signers([emailOwner, credential])
       .rpc();
     functions.logger.info("4");
 
