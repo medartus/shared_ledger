@@ -14,6 +14,7 @@
     "airbnb-typescript"
   ],
   "rules": {
+    "linebreak-style": 0,
     "no-console": 1, // Means warning
     "prettier/prettier": [
       "error",
@@ -21,15 +22,18 @@
         "endOfLine": "auto"
       }
     ],
-    "@typescript-eslint/comma-dangle": [
-      "error",
+    "@typescript-eslint/comma-dangle":"off",
+    "react/function-component-definition": [
+      2,
       {
-        "arrays": "always-multiline",
-        "exports": "always-multiline",
-        "functions": "never",
-        "imports": "always-multiline",
-        "objects": "always-multiline"
+        "namedComponents": "arrow-function",
+        "unnamedComponents": "arrow-function"
       }
-    ]
+    ],
+    "implicit-arrow-linebreak":"warn",
+    "operator-linebreak":"warn",
+    "object-curly-newline": "off",
+    "@typescript-eslint/indent":"warn",
+    "react/jsx-no-useless-fragment": "off"
   }
 }
