@@ -1,7 +1,7 @@
 import { PublicKey, SystemProgram, Connection, Keypair } from '@solana/web3.js';
 import { AnchorWallet } from '@solana/wallet-adapter-react';
 import * as anchor from '@project-serum/anchor';
-import { Program } from '@project-serum/anchor';
+import { Program, Idl } from '@project-serum/anchor';
 import Base64 from 'crypto-js/enc-base64';
 import sha256 from 'crypto-js/sha256';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,7 +9,6 @@ import bs58 from 'bs58';
 import BN from 'bn.js';
 
 import getProgram from './anchor';
-import { IDL, SharedLedger } from '../types/shared_ledger';
 import { senNotification, verifyCredentials } from './api';
 
 const PROGRAM_ID = new PublicKey(
@@ -49,7 +48,7 @@ const TransactionReceiverFilter = (user: PublicKey) => ({
 });
 
 export class SharedLedgerWrapper {
-  program: Program<SharedLedger> | null;
+  program: Program<Idl> | null;
 
   wallet: AnchorWallet | null;
 
@@ -59,9 +58,9 @@ export class SharedLedgerWrapper {
   }
 
   initialize = async (wallet: AnchorWallet, connection: Connection) => {
-    const program = await getProgram(wallet, connection, PROGRAM_ID, IDL);
+    const program = await getProgram(wallet, connection, PROGRAM_ID);
     if (program) {
-      this.program = program as unknown as Program<SharedLedger>;
+      this.program = program;
       this.wallet = wallet;
     }
   };
@@ -84,7 +83,9 @@ export class SharedLedgerWrapper {
         .signers([credential])
         .rpc();
 
-      verifyCredentials(email, this.wallet.publicKey, uuid);
+      verifyCredentials(email, this.wallet.publicKey, uuid).then((res) => {
+        console.log(res);
+      });
     }
   };
 

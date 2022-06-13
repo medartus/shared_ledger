@@ -12,7 +12,7 @@ export enum ApiEndpoint {
 export const getEndpoint = (endpointType: ApiEndpoint) => {
   switch (endpointType) {
     case ApiEndpoint.VERIFY_TRANSCATION:
-      return `${API_ADDRESS}'/shared-w3-ledger/us-central1/verifyTransaction`;
+      return `${API_ADDRESS}/shared-w3-ledger/us-central1/verifyTransaction`;
     case ApiEndpoint.WALLET_EXISTS:
       return `${API_ADDRESS}/shared-w3-ledger/us-central1/walletExists`;
     case ApiEndpoint.SEND_NOTIFICATION:

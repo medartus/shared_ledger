@@ -17,6 +17,7 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
     payerWallet: '',
     amount: '',
   });
+
   const { topic, amount, payerWallet } = inputValue;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

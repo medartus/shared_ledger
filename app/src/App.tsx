@@ -11,6 +11,8 @@ import TransactionsRecap from './components/TransactionRecap';
 import { SharedLedgerWrapper, Transfer } from './lib/shared_ledger';
 import TransactionsCreation from './components/TransactionCreation';
 import TransactionsViewer from './components/TransactionViewer';
+import { walletExists } from './lib/api';
+import CredentialModal from './modals/CredentialsModal';
 
 const sharedLedgerWrapper = new SharedLedgerWrapper();
 
@@ -19,6 +21,7 @@ const App = () => {
   const { publicKey, connected } = useWallet();
   const wallet = useAnchorWallet();
   const [initializedProgram, setInitilizedProgram] = useState<boolean>(false);
+  const [isKnownUser, setIsKnowUser] = useState<boolean | undefined>(undefined);
   const [transferRequets, setTransferRequets] = useState<Transfer[]>();
   const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(
     null
@@ -32,17 +35,28 @@ const App = () => {
         console.log('wallet set');
         setInitilizedProgram(true);
       });
+    } else {
+      setInitilizedProgram(false);
+      setTransferRequets([]);
     }
   }, [wallet, connection]);
 
   useEffect(() => {
-    if (connected && initializedProgram) {
+    if (publicKey) {
+      walletExists(publicKey).then((res) => {
+        setIsKnowUser(res.status === 200);
+      });
+    }
+  }, [publicKey]);
+
+  useEffect(() => {
+    if (initializedProgram) {
       setTransferRequets([]);
       sharedLedgerWrapper
         .getTransferRequest()
         .then((res) => setTransferRequets(res));
     }
-  }, [connected, initializedProgram]);
+  }, [initializedProgram]);
 
   const onSelectTransfer = (transfer: Transfer) => {
     setSelectedTransfer(transfer);
@@ -54,6 +68,12 @@ const App = () => {
 
   return (
     <div className="App">
+      {isKnownUser !== undefined && (
+        <CredentialModal
+          sharedLedgerWrapper={sharedLedgerWrapper}
+          isKnownUser={isKnownUser}
+        />
+      )}
       <div className="flex flex-col items-center h-screen">
         <div className="flex flex-col md:flex-row items-center md:justify-around pt-5 md:w-full">
           <div className="flex flex-col items-center">
