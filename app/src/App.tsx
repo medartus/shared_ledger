@@ -21,6 +21,7 @@ const App = () => {
   const { publicKey, connected } = useWallet();
   const wallet = useAnchorWallet();
   const [initializedProgram, setInitilizedProgram] = useState<boolean>(false);
+  const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isKnownUser, setIsKnowUser] = useState<boolean | undefined>(undefined);
   const [transferRequets, setTransferRequets] = useState<Transfer[]>();
   const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(
@@ -58,11 +59,14 @@ const App = () => {
     }
   }, [initializedProgram]);
 
-  const onSelectTransfer = (transfer: Transfer) => {
+  const onSelectTransfer = (transfer: Transfer) =>
     setSelectedTransfer(transfer);
-  };
+
+  const onOpenCreationModal = () => setIsVisible(true);
+  const onCloseCreationModal = () => setIsVisible(false);
 
   const onClearViewer = () => {
+    onCloseCreationModal();
     setSelectedTransfer(null);
   };
 
@@ -96,7 +100,7 @@ const App = () => {
               <button
                 className="font-bold"
                 type="button"
-                onClick={onClearViewer}
+                onClick={onOpenCreationModal}
               >
                 New
               </button>
@@ -112,24 +116,24 @@ const App = () => {
             ) : null}
           </div>
           <div className="box-shadow hidden md:block p-5 flex flex-grow w-full rounded-t-3xl md:rounded-3xl min-h-screen md:min-h-0 mt-5 md:m-5">
-            <h3 className="font-bold">Create Transfer Request</h3>
-            {connected && publicKey && initializedProgram ? (
-              <>
-                {selectedTransfer ? (
-                  <TransactionsViewer
-                    transfer={selectedTransfer.account}
-                    sharedLedgerWrapper={sharedLedgerWrapper}
-                    userPubKey={publicKey}
-                    onCloseViewer={onClearViewer}
-                  />
-                ) : (
-                  <TransactionsCreation
-                    sharedLedgerWrapper={sharedLedgerWrapper}
-                    userPubKey={publicKey}
-                  />
-                )}
-              </>
-            ) : null}
+            {connected &&
+              publicKey &&
+              initializedProgram &&
+              (selectedTransfer ? (
+                <TransactionsViewer
+                  transfer={selectedTransfer.account}
+                  sharedLedgerWrapper={sharedLedgerWrapper}
+                  userPubKey={publicKey}
+                  onCloseViewer={onClearViewer}
+                />
+              ) : (
+                <TransactionsCreation
+                  sharedLedgerWrapper={sharedLedgerWrapper}
+                  userPubKey={publicKey}
+                  isVisible={isVisible}
+                  onCloseModal={onCloseCreationModal}
+                />
+              ))}
           </div>
         </div>
       </div>

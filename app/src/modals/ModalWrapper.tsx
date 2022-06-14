@@ -44,8 +44,10 @@ const ModalWrapper: FC<ModalWrapperProps> = ({
             leaveFrom="opacity-100 translate-y-0 md:scale-100"
             leaveTo="opacity-0 translate-y-4 md:translate-y-0 md:scale-95"
           >
-            <Dialog.Panel className="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all md:my-8 md:max-w-lg md:w-full">
-              {children}
+            <Dialog.Panel className="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all md:my-8 max-w-lg w-full">
+              <div className="bg-white px-4 pt-5 pb-4 md:p-6 md:pb-4">
+                {children}
+              </div>
             </Dialog.Panel>
           </Transition.Child>
         </div>

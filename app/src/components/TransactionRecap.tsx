@@ -8,6 +8,7 @@ import {
   Transfer,
   TransferAccount,
 } from '../lib/shared_ledger';
+import { getWalletString } from '../utils/utils';
 
 type TransactionBubbleProps = {
   eventType: EventType;
@@ -31,10 +32,8 @@ const TransferRecap: FC<TransferProps> = ({
   const { from, to, events, amount, topic } = transfer;
   const { publicKey } = useWallet();
   const isReceiver = to === publicKey;
-  const stranegrWallet = (isReceiver ? from : to).toString();
-  const stranegrWalletStart = stranegrWallet.substring(0, 6);
-  const stranegrWalletEnd = stranegrWallet.substring(stranegrWallet.length - 6);
-  const stranegrWalletText = `${stranegrWalletStart}...${stranegrWalletEnd}`;
+  const strangerWallet = getWalletString(isReceiver ? from : to, true);
+
   const parsedEvents = parseEvents(events);
   const processedTrandsaction =
     parsedEvents[1].eventType !== EventType.UNDEFINED;
@@ -42,8 +41,6 @@ const TransferRecap: FC<TransferProps> = ({
   const formatedDate = moment(eventToDsiplay.date).format('MMM Do YYYY');
 
   const amountText = `${isReceiver ? '+' : '-'}${amount.toNumber()} ◎`;
-
-  console.log(isSelected);
 
   return (
     <li className={`flex ${isSelected ? 'selected-transaction' : ''}`}>
@@ -59,7 +56,7 @@ const TransferRecap: FC<TransferProps> = ({
             <p>{amountText}</p>
           </div>
           <div className="flex flex-row justify-between">
-            <p>{stranegrWalletText}</p>
+            <p>{strangerWallet}</p>
             <p>{formatedDate}</p>
           </div>
         </div>

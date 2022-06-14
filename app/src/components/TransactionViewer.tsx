@@ -1,6 +1,8 @@
+import React, { FC, useRef } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import moment from 'moment';
-import React, { FC } from 'react';
+import { useWindowWidth } from '@react-hook/window-size';
+
 import {
   EventType,
   parseEvents,
@@ -8,18 +10,23 @@ import {
   TransactionEventParsed,
   TransferAccount,
 } from '../lib/shared_ledger';
+import {
+  TransactionWrapperModal,
+  TransactionWrapperTitle,
+} from '../modals/TransactionWrapper';
 import TransactionProgress from './TransactionProgress';
+import { getWalletString } from '../utils/utils';
 
 const eventString = (eventType: EventType) => {
   switch (eventType) {
     case EventType.CREATION:
-      return 'Transfer creation:';
+      return 'Created:';
     case EventType.CANCEL:
-      return 'Transfer cancelation:';
+      return 'Canceled:';
     case EventType.TRANSFER:
-      return 'Transfer payed:';
+      return 'Payed:';
     default:
-      return 'Status: Pending Payer Transfer...';
+      return '';
   }
 };
 
@@ -30,12 +37,12 @@ type TransactionsEventRecapProps = {
 const TransactionsEventRecap: FC<TransactionsEventRecapProps> = ({ event }) => {
   const { date, eventType } = event;
 
-  const formatedDate = moment(date).format('HH:mm - MMMM Do YYYY');
+  const formatedDate = moment(date).format('MMMM Do YYYY - HH:mm');
 
   if (eventType === EventType.UNDEFINED) return <></>;
 
   return (
-    <li className="flex flex-row flex justify-between">
+    <li className="flex flex-wrap flex-row justify-between">
       <p>{eventString(eventType)}</p>
       <p>{formatedDate}</p>
     </li>
@@ -48,7 +55,7 @@ type TransactionInfoProps = {
 };
 
 const TransactionInfo: FC<TransactionInfoProps> = ({ leftInfo, rightInfo }) => (
-  <li className="flex flex-row flex justify-between">
+  <li className="flex md:flex-row justify-between">
     <p>{leftInfo}</p>
     <p>{rightInfo}</p>
   </li>
@@ -57,7 +64,6 @@ const TransactionInfo: FC<TransactionInfoProps> = ({ leftInfo, rightInfo }) => (
 type TransactionActionsProps = {
   finalEvent: TransactionEventParsed;
   isPayer: boolean;
-  onCloseViewer: () => void;
   onProcessTransfer: () => void;
   onCancelTransfer: () => void;
 };
@@ -65,29 +71,32 @@ type TransactionActionsProps = {
 const TransactionActions: FC<TransactionActionsProps> = ({
   finalEvent,
   isPayer,
-  onCloseViewer,
   onProcessTransfer,
   onCancelTransfer,
 }) => {
-  if (finalEvent.eventType !== EventType.UNDEFINED) {
+  if (finalEvent.eventType === EventType.UNDEFINED) {
+    if (isPayer) {
+      return (
+        <button
+          type="button"
+          className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 md:ml-3 md:w-auto md:text-sm"
+          onClick={onProcessTransfer}
+        >
+          Pay
+        </button>
+      );
+    }
     return (
-      <button type="button" onClick={onCloseViewer}>
-        Close
+      <button
+        type="button"
+        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 md:ml-3 md:w-auto md:text-sm"
+        onClick={onCancelTransfer}
+      >
+        Cancel
       </button>
     );
   }
-  if (isPayer) {
-    return (
-      <button type="submit" onClick={onProcessTransfer}>
-        Pay
-      </button>
-    );
-  }
-  return (
-    <button type="submit" onClick={onCancelTransfer}>
-      Cancel
-    </button>
-  );
+  return <></>;
 };
 
 type TransactionsViewerProps = {
@@ -107,39 +116,68 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
   const parsedEvents = parseEvents(events);
   const isPayer = userPubKey.equals(transfer.from);
 
+  const windowWidth = useWindowWidth();
+  const shortenWallet = windowWidth <= 768;
+  const walletChars = 10;
+
+  const onClose = () => {};
+
   return (
-    <>
-      <h3>{topic}</h3>
-      <ul>
-        <TransactionInfo leftInfo="Payer:" rightInfo={from.toString()} />
-        <TransactionInfo leftInfo="Receiver:" rightInfo={to.toString()} />
-        <TransactionInfo
-          leftInfo="Amount:"
-          rightInfo={`${amount.toNumber()} ◎`}
-        />
-      </ul>
-      <TransactionProgress events={parsedEvents} />
-      <p>History:</p>
-      <ul>
-        {parsedEvents.map((event) => (
-          <TransactionsEventRecap
-            key={event.date.toDateString()}
-            event={event}
+    <TransactionWrapperModal
+      isVisible
+      initialFocus={useRef(null)}
+      onClose={onClose}
+    >
+      <TransactionWrapperTitle title={topic} />
+      <div className="my-2">
+        <ul>
+          <TransactionInfo
+            leftInfo="Payer:"
+            rightInfo={getWalletString(from, shortenWallet, walletChars)}
           />
-        ))}
-      </ul>
-      <TransactionActions
-        finalEvent={parsedEvents[1]}
-        isPayer={isPayer}
-        onCloseViewer={onCloseViewer}
-        onCancelTransfer={() =>
-          sharedLedgerWrapper.cancelTransferRequest(transfer)
-        }
-        onProcessTransfer={() =>
-          sharedLedgerWrapper.executeTransferRequest(transfer)
-        }
-      />
-    </>
+          <TransactionInfo
+            leftInfo="Receiver:"
+            rightInfo={getWalletString(to, shortenWallet, walletChars)}
+          />
+          <TransactionInfo
+            leftInfo="Amount:"
+            rightInfo={`${amount.toNumber()} ◎`}
+          />
+        </ul>
+      </div>
+
+      <div className="py-2">
+        <p>Transfer History:</p>
+        <ul>
+          {parsedEvents.map((event) => (
+            <TransactionsEventRecap
+              key={event.date.toDateString()}
+              event={event}
+            />
+          ))}
+        </ul>
+      </div>
+      <TransactionProgress events={parsedEvents} />
+      <div className="py-3 md:flex md:flex-row-reverse">
+        <TransactionActions
+          finalEvent={parsedEvents[1]}
+          isPayer={isPayer}
+          onCancelTransfer={() =>
+            sharedLedgerWrapper.cancelTransferRequest(transfer)
+          }
+          onProcessTransfer={() =>
+            sharedLedgerWrapper.executeTransferRequest(transfer)
+          }
+        />
+        <button
+          type="button"
+          className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 md:mt-0 md:ml-3 md:w-auto md:text-sm"
+          onClick={onCloseViewer}
+        >
+          Close
+        </button>
+      </div>
+    </TransactionWrapperModal>
   );
 };
 
