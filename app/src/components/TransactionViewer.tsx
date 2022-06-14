@@ -1,6 +1,7 @@
 import React, { FC, useRef } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import moment from 'moment';
+import { toast } from 'react-toastify';
 import { useWindowWidth } from '@react-hook/window-size';
 
 import {
@@ -104,6 +105,7 @@ type TransactionsViewerProps = {
   transfer: TransferAccount;
   userPubKey: PublicKey;
   onCloseViewer: () => void;
+  onUpdateTransfers: () => void;
 };
 
 const TransactionsViewer: FC<TransactionsViewerProps> = ({
@@ -111,22 +113,46 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
   transfer,
   userPubKey,
   onCloseViewer,
+  onUpdateTransfers,
 }) => {
   const { events, from, to, amount, topic } = transfer;
   const parsedEvents = parseEvents(events);
   const isPayer = userPubKey.equals(transfer.from);
 
   const windowWidth = useWindowWidth();
-  const shortenWallet = windowWidth <= 768;
+  const shortenWallet = windowWidth <= 1024;
   const walletChars = 10;
 
-  const onClose = () => {};
+  const onValidateRequest = () => {
+    onUpdateTransfers();
+    onCloseViewer();
+  };
+
+  const onCancelTransfer = () => {
+    toast
+      .promise(sharedLedgerWrapper.cancelTransferRequest(transfer), {
+        pending: 'Pending transfer request cancelation ...',
+        success: 'Sucessful transfer request cancelation',
+        error: 'Impossible transfer request cancelation',
+      })
+      .then(onValidateRequest);
+  };
+
+  const onProcessTransfer = () => {
+    toast
+      .promise(sharedLedgerWrapper.executeTransferRequest(transfer), {
+        pending: 'Pending transfer request payement ...',
+        success: 'Sucessful transfer request payement',
+        error: 'Impossible transfer request payement',
+      })
+      .then(onValidateRequest);
+  };
 
   return (
     <TransactionWrapperModal
       isVisible
       initialFocus={useRef(null)}
-      onClose={onClose}
+      onClose={onCloseViewer}
     >
       <TransactionWrapperTitle title={topic} />
       <div className="my-2">
@@ -162,12 +188,8 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
         <TransactionActions
           finalEvent={parsedEvents[1]}
           isPayer={isPayer}
-          onCancelTransfer={() =>
-            sharedLedgerWrapper.cancelTransferRequest(transfer)
-          }
-          onProcessTransfer={() =>
-            sharedLedgerWrapper.executeTransferRequest(transfer)
-          }
+          onCancelTransfer={onCancelTransfer}
+          onProcessTransfer={onProcessTransfer}
         />
         <button
           type="button"

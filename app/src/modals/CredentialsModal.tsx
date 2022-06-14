@@ -1,6 +1,7 @@
 import React, { useRef, useState, FC } from 'react';
 import { Dialog } from '@headlessui/react';
 import { InformationCircleIcon } from '@heroicons/react/outline';
+import { toast } from 'react-toastify';
 
 import ModalWrapper from './ModalWrapper';
 import Input from '../components/Input';
@@ -30,7 +31,11 @@ const CredentialModal: FC<CredentialModalProps> = ({
   };
 
   const onSubmitEmail = () => {
-    sharedLedgerWrapper.createCredential(email);
+    toast.promise(sharedLedgerWrapper.createCredential(email), {
+      pending: 'Pending credential creation ...',
+      success: 'Sucessful credential creation',
+      error: 'Impossible credential creation',
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,10 +60,7 @@ const CredentialModal: FC<CredentialModalProps> = ({
           />
         </div>
         <div className="mt-3 text-center md:mt-0 md:ml-4 md:text-left">
-          <Dialog.Title
-            as="h3"
-            className="text-lg leading-6 font-medium text-gray-900"
-          >
+          <Dialog.Title as="h3" className="text-lg leading-6 font-bold">
             Configure Your Email
           </Dialog.Title>
           <div className="mt-2">

@@ -10,26 +10,19 @@ type TransactionWrapperTitleProps = {
 
 export const TransactionWrapperTitle: FC<TransactionWrapperTitleProps> = ({
   title,
-}) => {
-  const windowWidth = useWindowWidth();
-
-  return (
-    <>
-      {windowWidth <= 768 ? (
-        <div className="mt-3 mb-5 text-center">
-          <Dialog.Title
-            as="h3"
-            className="text-lg leading-6 font-bold text-gray-900"
-          >
-            {title}
-          </Dialog.Title>
-        </div>
-      ) : (
-        <h3>{title}</h3>
-      )}
-    </>
-  );
-};
+}) => (
+  <>
+    {useWindowWidth() <= 768 ? (
+      <div className="mt-3 mb-5 text-center">
+        <Dialog.Title as="h3" className="text-lg leading-6 font-bold">
+          {title}
+        </Dialog.Title>
+      </div>
+    ) : (
+      <h3 className="text-lg leading-6 font-bold">{title}</h3>
+    )}
+  </>
+);
 
 type TransactionWrapperModalProps = {
   children: React.ReactNode;
@@ -43,22 +36,18 @@ export const TransactionWrapperModal: FC<TransactionWrapperModalProps> = ({
   isVisible,
   initialFocus,
   onClose,
-}) => {
-  const windowWidth = useWindowWidth();
-  console.log(windowWidth);
-  return (
-    <>
-      {windowWidth <= 768 ? (
-        <ModalWrapper
-          isVisible={isVisible}
-          initialFocus={initialFocus}
-          onClose={onClose}
-        >
-          {children}
-        </ModalWrapper>
-      ) : (
-        <>{children}</>
-      )}
-    </>
-  );
-};
+}) => (
+  <>
+    {useWindowWidth() <= 768 ? (
+      <ModalWrapper
+        isVisible={isVisible}
+        initialFocus={initialFocus}
+        onClose={onClose}
+      >
+        {children}
+      </ModalWrapper>
+    ) : (
+      <>{children}</>
+    )}
+  </>
+);

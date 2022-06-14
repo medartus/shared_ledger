@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import React, { FC, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import { SharedLedgerWrapper } from '../lib/shared_ledger';
 import {
   TransactionWrapperModal,
@@ -9,16 +10,16 @@ import Input from './Input';
 
 type TransactionsCreationProps = {
   sharedLedgerWrapper: SharedLedgerWrapper;
-  userPubKey: PublicKey;
   isVisible: boolean;
   onCloseModal: () => void;
+  onUpdateTransfers: () => void;
 };
 
 const TransactionsCreation: FC<TransactionsCreationProps> = ({
   sharedLedgerWrapper,
-  userPubKey,
   isVisible,
   onCloseModal,
+  onUpdateTransfers,
 }) => {
   const [inputValue, setInputValue] = useState({
     topic: '',
@@ -37,12 +38,26 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
     console.log(inputValue);
   };
 
+  const onValidateRequest = () => {
+    onUpdateTransfers();
+    onCloseModal();
+  };
+
   const onCreateTransferRequest = async () => {
-    await sharedLedgerWrapper.createTransferRequest(
-      topic,
-      parseInt(amount, 10),
-      new PublicKey(payerWallet)
-    );
+    toast
+      .promise(
+        sharedLedgerWrapper.createTransferRequest(
+          topic,
+          parseInt(amount, 10),
+          new PublicKey(payerWallet)
+        ),
+        {
+          pending: 'Pending transfer request creation ...',
+          success: 'Sucessful transfer request creation',
+          error: 'Impossible transfer request creation',
+        }
+      )
+      .then(onValidateRequest);
   };
 
   return (
@@ -53,7 +68,7 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
     >
       <TransactionWrapperTitle title="Create Transfer Request" />
       <form className="mt-3">
-        <div className="mb-6">
+        <div className="my-3 space-y-4">
           <Input
             id="topic"
             inputType="text"
@@ -63,8 +78,6 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
             value={topic}
             onChange={handleChange}
           />
-        </div>
-        <div className="mb-2">
           <Input
             id="amount"
             inputType="number"
@@ -74,8 +87,6 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
             value={amount}
             onChange={handleChange}
           />
-        </div>
-        <div className="mb-6">
           <Input
             id="wallet-from"
             inputType="text"
@@ -86,24 +97,13 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
             onChange={handleChange}
           />
         </div>
-        <div className="mb-6">
-          <Input
-            id="wallet-to"
-            inputType="text"
-            name="receiverWallet"
-            label="Receiver Wallet"
-            placeholder={userPubKey.toString()}
-            value={userPubKey.toString()}
-            onChange={() => {}}
-          />
-        </div>
         <div className="py-3 md:flex md:flex-row-reverse">
           <button
             type="button"
             className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 md:ml-3 md:w-auto md:text-sm"
             onClick={onCreateTransferRequest}
           >
-            Cancel
+            Create
           </button>
           <button
             type="button"

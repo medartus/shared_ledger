@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { ToastContainer } from 'react-toastify';
 import {
   useAnchorWallet,
   useConnection,
   useWallet,
 } from '@solana/wallet-adapter-react';
+
+import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
 import TransactionsRecap from './components/TransactionRecap';
@@ -28,12 +31,12 @@ const App = () => {
     null
   );
 
+  const onUpdateTransfers = () =>
+    sharedLedgerWrapper.getTransferRequest().then(setTransferRequets);
+
   useEffect(() => {
     if (wallet) {
-      console.log('wallet config');
-      console.log(wallet, connection);
       sharedLedgerWrapper.initialize(wallet, connection).then(() => {
-        console.log('wallet set');
         setInitilizedProgram(true);
       });
     } else {
@@ -53,25 +56,29 @@ const App = () => {
   useEffect(() => {
     if (initializedProgram) {
       setTransferRequets([]);
-      sharedLedgerWrapper
-        .getTransferRequest()
-        .then((res) => setTransferRequets(res));
+      onUpdateTransfers();
     }
   }, [initializedProgram]);
 
-  const onSelectTransfer = (transfer: Transfer) =>
+  const onSelectTransfer = (transfer: Transfer | null) =>
     setSelectedTransfer(transfer);
 
   const onOpenCreationModal = () => setIsVisible(true);
   const onCloseCreationModal = () => setIsVisible(false);
 
+  const onDisplayCreation = () => {
+    onOpenCreationModal();
+    onSelectTransfer(null);
+  };
+
   const onClearViewer = () => {
     onCloseCreationModal();
-    setSelectedTransfer(null);
+    onSelectTransfer(null);
   };
 
   return (
     <div className="App">
+      <ToastContainer />
       {isKnownUser !== undefined && (
         <CredentialModal
           sharedLedgerWrapper={sharedLedgerWrapper}
@@ -96,11 +103,11 @@ const App = () => {
         <div className="flex grow flex-row w-full">
           <div className="box-shadow md:block flex flex-col flex-grow w-full rounded-t-3xl md:rounded-3xl min-h-screen md:min-h-0 mt-5 md:m-5 md:max-w-md">
             <div className="flex p-5 flex-row justify-between">
-              <h3 className="font-bold">Transactions</h3>
+              <h3 className="text-lg font-bold">Transactions</h3>
               <button
-                className="font-bold"
+                className="text-lg font-bold"
                 type="button"
-                onClick={onOpenCreationModal}
+                onClick={onDisplayCreation}
               >
                 New
               </button>
@@ -125,13 +132,14 @@ const App = () => {
                   sharedLedgerWrapper={sharedLedgerWrapper}
                   userPubKey={publicKey}
                   onCloseViewer={onClearViewer}
+                  onUpdateTransfers={onUpdateTransfers}
                 />
               ) : (
                 <TransactionsCreation
                   sharedLedgerWrapper={sharedLedgerWrapper}
-                  userPubKey={publicKey}
                   isVisible={isVisible}
                   onCloseModal={onCloseCreationModal}
+                  onUpdateTransfers={onUpdateTransfers}
                 />
               ))}
           </div>

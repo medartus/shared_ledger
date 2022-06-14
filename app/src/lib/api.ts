@@ -38,7 +38,7 @@ export const walletExists = (wallet: PublicKey) =>
     walletPubkey: wallet,
   });
 
-export const senNotification = (transactionUuid: PublicKey) =>
+export const sendNotification = (transactionUuid: PublicKey) =>
   axios.post(getEndpoint(ApiEndpoint.SEND_NOTIFICATION), {
     transactionUuid,
   });

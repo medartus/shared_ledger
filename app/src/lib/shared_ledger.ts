@@ -9,7 +9,7 @@ import bs58 from 'bs58';
 import BN from 'bn.js';
 
 import getProgram from './anchor';
-import { senNotification, verifyCredentials } from './api';
+import { sendNotification, verifyCredentials } from './api';
 
 const PROGRAM_ID = new PublicKey(
   '27b22Rj4yVNXM1vEdh65LJ2HsfbmWwBeoncMEFd14bhL'
@@ -47,6 +47,18 @@ const TransactionReceiverFilter = (user: PublicKey) => ({
   },
 });
 
+const sortTransfers = (transfersLists: Transfer[][]) => {
+  const transferList = [
+    ...transfersLists[0],
+    ...transfersLists[1],
+  ] as Transfer[];
+  return transferList.sort(
+    (a, b) =>
+      a.account.events[0].timestamp.toNumber() -
+      b.account.events[0].timestamp.toNumber()
+  );
+};
+
 export class SharedLedgerWrapper {
   program: Program<Idl> | null;
 
@@ -83,10 +95,9 @@ export class SharedLedgerWrapper {
         .signers([credential])
         .rpc();
 
-      verifyCredentials(email, this.wallet.publicKey, uuid).then((res) => {
-        console.log(res);
-      });
+      return verifyCredentials(email, this.wallet.publicKey, uuid);
     }
+    throw new Error('The pogram or the wallet is not set');
   };
 
   createTransferRequest = async (
@@ -94,12 +105,10 @@ export class SharedLedgerWrapper {
     amount: number,
     payer: PublicKey
   ) => {
-    console.log(this.program, this.wallet);
     if (this.program && this.wallet) {
       const transferUuid = Keypair.generate().publicKey;
 
       const [transferPDA] = await getTransferPDA(transferUuid);
-      console.log(topic, amount, payer, transferPDA);
 
       await this.program.methods
         .createTransferRequest(transferUuid, topic, new BN(amount))
@@ -111,8 +120,9 @@ export class SharedLedgerWrapper {
         })
         .rpc();
 
-      await senNotification(transferUuid);
+      return sendNotification(transferUuid);
     }
+    throw new Error('The pogram or the wallet is not set');
   };
 
   cancelTransferRequest = async (transfer: TransferAccount) => {
@@ -120,7 +130,7 @@ export class SharedLedgerWrapper {
       const { uuid } = transfer;
       const [transferPDA] = await getTransferPDA(uuid);
 
-      await this.program.methods
+      return this.program.methods
         .cancelTransferRequest(uuid)
         .accounts({
           requester: this.wallet.publicKey,
@@ -129,6 +139,7 @@ export class SharedLedgerWrapper {
         })
         .rpc();
     }
+    throw new Error('The pogram or the wallet is not set');
   };
 
   executeTransferRequest = async (transfer: TransferAccount) => {
@@ -137,7 +148,7 @@ export class SharedLedgerWrapper {
 
       const [transferPDA] = await getTransferPDA(uuid);
 
-      await this.program.methods
+      return this.program.methods
         .executeTransferRequest(uuid)
         .accounts({
           requester: to,
@@ -147,33 +158,25 @@ export class SharedLedgerWrapper {
         })
         .rpc();
     }
+    throw new Error('The pogram or the wallet is not set');
   };
 
-  getTransferRequest = (): Promise<Transfer[]> =>
-    new Promise((resolve) => {
-      if (this.program && this.wallet) {
-        Promise.all([
-          this.program.account.transfer.all([
-            TransactionPayerFilter(this.wallet.publicKey),
-          ]),
-          this.program.account.transfer.all([
-            TransactionReceiverFilter(this.wallet.publicKey),
-          ]),
-        ]).then((res) => {
-          console.log(res);
-          const transferList = [...res[0], ...res[1]] as Transfer[];
-          transferList.sort(
-            (a, b) =>
-              a.account.events[0].timestamp.toNumber() -
-              b.account.events[0].timestamp.toNumber()
-          );
-          console.log(transferList);
-          resolve(transferList);
-        });
-      } else {
-        resolve([]);
-      }
-    });
+  getTransferRequest = async (): Promise<Transfer[]> => {
+    if (this.program && this.wallet) {
+      return Promise.all([
+        this.program.account.transfer.all([
+          TransactionPayerFilter(this.wallet.publicKey),
+        ]),
+        this.program.account.transfer.all([
+          TransactionReceiverFilter(this.wallet.publicKey),
+        ]),
+      ]).then((res) => {
+        const transfersLists = res as unknown as Transfer[][];
+        return sortTransfers(transfersLists);
+      });
+    }
+    return [];
+  };
 
   getTransferRequestfromUuid = async (
     transactionUuid: PublicKey
