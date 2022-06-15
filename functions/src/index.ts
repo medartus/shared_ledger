@@ -12,6 +12,7 @@ import {
   parseEvents,
   SharedLedgerWrapper,
 } from "../api/shared_ledger";
+import { getSolPrice, getTransactionUrl } from "../utils/utils";
 
 const sharedLedgerWrapper = new SharedLedgerWrapper();
 sharedLedgerWrapper.initialize();
@@ -139,8 +140,17 @@ export const sendNotification = functions.https.onRequest(
 
         const mailProvider = new MailProvider();
 
+        const { amount, topic, uuid } = transfers[0].account;
+        const solAmount = getSolPrice(amount);
+        const transactionUrl = getTransactionUrl(uuid);
+
         mailProvider
-          .sendWelcomeEmail(email as string, "Markitanki")
+          .sendTransactionRequest(
+            email as string,
+            solAmount.toString(),
+            topic,
+            transactionUrl
+          )
           .then(async () => {
             await db.setNotificationStatus(
               transactionUuid,

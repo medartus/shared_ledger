@@ -34,12 +34,10 @@ class MailProvider {
   getEmailTemplate(templateName: string, context: { [key: string]: string }) {
     let html = readFileSync(`./emailTemplates/${templateName}.html`, "utf8");
 
-    if (context) {
-      Object.keys(context).forEach((key) => {
-        const regex = new RegExp(`{{${key}}}`, "g");
-        html = html.replace(regex, context[key]);
-      });
-    }
+    Object.keys(context).forEach((key) => {
+      const regex = new RegExp(`{{${key}}}`, "g");
+      html = html.replace(regex, context[key]);
+    });
 
     return juice(html);
   }
@@ -50,7 +48,7 @@ class MailProvider {
     email: string,
     subject: string
   ) {
-    const html = this.getEmailTemplate(template, (params = {}));
+    const html = this.getEmailTemplate(template, params);
     return {
       from: emailAddress,
       to: email,
@@ -58,49 +56,30 @@ class MailProvider {
       html,
       attachments: [
         {
-          path: "./emailTemplates/fmf.png",
-          cid: "fmfLogo",
+          path: "./emailTemplates/images/transaction-request.png",
+          cid: "transaction-request",
         },
       ],
     };
   }
 
-  //   sendPostConfirmation(data) {
-  //     const { userUID, shareCommentary, publisherName, publisherPhoto } = data;
-  //     return new Promise(async (resolve, reject) => {
-  //       const { email, displayName, photoURL } = await admin
-  //         .auth()
-  //         .getUser(userUID)
-  //         .then((userRecord) => {
-  //           return userRecord;
-  //         })
-  //         .catch((err) => reject(err));
-  //       if (email !== undefined) {
-  //         const name = publisherName ? publisherName : displayName;
-  //         const photo = publisherPhoto ? publisherPhoto : photoURL;
-  //         const params = { displayName: name, shareCommentary, photoURL: photo };
-  //         const mailOptions = this.createMailOptions(
-  //           "postConfirmation",
-  //           params,
-  //           email,
-  //           "FeedMyFlow post confirmation"
-  //         );
-  //         this.sendEmail(mailOptions)
-  //           .then((res) => resolve(res))
-  //           .catch((err) => reject(err));
-  //       } else {
-  //         console.log(`No email for user ${userUID}`);
-  //       }
-  //     });
-  //   }
-
-  sendWelcomeEmail(email: string, displayName: string) {
+  sendTransactionRequest(
+    email: string,
+    amount: string,
+    topic: string,
+    transactionUrl: string
+  ) {
     return new Promise(async (resolve, reject) => {
       const mailOptions = this.createMailOptions(
-        "welcome",
-        { displayName },
+        "transaction-creation",
+        {
+          amount,
+          topic,
+          transactionUrl,
+          contactEmail: functions.config().email.address,
+        },
         email,
-        "Weclome on FeedMyFlow !"
+        `Request transfer of ${amount} SOL`
       );
       this.sendEmail(mailOptions)
         .then((res) => resolve(res))
