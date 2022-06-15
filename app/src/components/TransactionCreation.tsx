@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import React, { FC, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { SharedLedgerWrapper } from '../lib/shared_ledger';
@@ -48,7 +48,7 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
       .promise(
         sharedLedgerWrapper.createTransferRequest(
           topic,
-          parseInt(amount, 10),
+          parseInt(amount, 10) * LAMPORTS_PER_SOL,
           new PublicKey(payerWallet)
         ),
         {
@@ -81,9 +81,9 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
           <Input
             id="amount"
             inputType="number"
-            label="Amount"
+            label="Amount in SOL"
             name="amount"
-            placeholder="2"
+            placeholder="2 ◎"
             value={amount}
             onChange={handleChange}
           />

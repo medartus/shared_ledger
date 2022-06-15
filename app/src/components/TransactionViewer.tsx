@@ -16,7 +16,7 @@ import {
   TransactionWrapperTitle,
 } from '../modals/TransactionWrapper';
 import TransactionProgress from './TransactionProgress';
-import { getWalletString } from '../utils/utils';
+import { getSolPrice, getWalletString } from '../utils/utils';
 
 const eventString = (eventType: EventType) => {
   switch (eventType) {
@@ -167,7 +167,7 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
           />
           <TransactionInfo
             leftInfo="Amount:"
-            rightInfo={`${amount.toNumber()} ◎`}
+            rightInfo={`${getSolPrice(amount.toNumber(), 2)} ◎`}
           />
         </ul>
       </div>
@@ -177,7 +177,7 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
         <ul>
           {parsedEvents.map((event) => (
             <TransactionsEventRecap
-              key={event.date.toDateString()}
+              key={event.date.getTime().toString()}
               event={event}
             />
           ))}

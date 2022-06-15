@@ -10,6 +10,7 @@ import {
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
+import { PublicKey } from '@solana/web3.js';
 import TransactionsRecap from './components/TransactionRecap';
 import { SharedLedgerWrapper, Transfer } from './lib/shared_ledger';
 import TransactionsCreation from './components/TransactionCreation';
@@ -19,20 +20,42 @@ import CredentialModal from './modals/CredentialsModal';
 
 const sharedLedgerWrapper = new SharedLedgerWrapper();
 
+const isPathEqual = (path: string) => window.location.pathname === `/${path}`;
+const getParam = (param: string) =>
+  new URLSearchParams(window.location.search).get(param);
+
 const App = () => {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
   const wallet = useAnchorWallet();
   const [initializedProgram, setInitilizedProgram] = useState<boolean>(false);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [alreadyRenderedTransfers, setAlreadyRenderedTransfers] =
+    useState<boolean>(false);
   const [isKnownUser, setIsKnowUser] = useState<boolean | undefined>(undefined);
   const [transferRequets, setTransferRequets] = useState<Transfer[]>();
   const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(
     null
   );
 
+  const [isCreationModalVisible, setIsCreationModalVisible] = useState<boolean>(
+    isPathEqual('create')
+  );
+
   const onUpdateTransfers = () =>
     sharedLedgerWrapper.getTransferRequest().then(setTransferRequets);
+
+  const openParamTransfer = () => {
+    const paramTransferValue = getParam('uuid');
+    if (paramTransferValue && isPathEqual('transfer')) {
+      const paramUuid = new PublicKey(paramTransferValue);
+      transferRequets?.every((transfer) => {
+        if (transfer.account.uuid.equals(paramUuid)) {
+          return setSelectedTransfer(transfer);
+        }
+        return true;
+      });
+    }
+  };
 
   useEffect(() => {
     if (wallet) {
@@ -41,7 +64,6 @@ const App = () => {
       });
     } else {
       setInitilizedProgram(false);
-      setTransferRequets([]);
     }
   }, [wallet, connection]);
 
@@ -55,16 +77,27 @@ const App = () => {
 
   useEffect(() => {
     if (initializedProgram) {
-      setTransferRequets([]);
       onUpdateTransfers();
+    } else {
+      setTransferRequets([]);
     }
   }, [initializedProgram]);
 
+  useEffect(() => {
+    if (
+      !alreadyRenderedTransfers &&
+      transferRequets &&
+      transferRequets.length > 0
+    ) {
+      setAlreadyRenderedTransfers(true);
+      openParamTransfer();
+    }
+  }, [transferRequets]);
   const onSelectTransfer = (transfer: Transfer | null) =>
     setSelectedTransfer(transfer);
 
-  const onOpenCreationModal = () => setIsVisible(true);
-  const onCloseCreationModal = () => setIsVisible(false);
+  const onOpenCreationModal = () => setIsCreationModalVisible(true);
+  const onCloseCreationModal = () => setIsCreationModalVisible(false);
 
   const onDisplayCreation = () => {
     onOpenCreationModal();
@@ -137,7 +170,7 @@ const App = () => {
               ) : (
                 <TransactionsCreation
                   sharedLedgerWrapper={sharedLedgerWrapper}
-                  isVisible={isVisible}
+                  isVisible={isCreationModalVisible}
                   onCloseModal={onCloseCreationModal}
                   onUpdateTransfers={onUpdateTransfers}
                 />

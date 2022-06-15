@@ -8,7 +8,7 @@ import {
   Transfer,
   TransferAccount,
 } from '../lib/shared_ledger';
-import { getWalletString } from '../utils/utils';
+import { getSolPrice, getWalletString } from '../utils/utils';
 
 type TransactionBubbleProps = {
   eventType: EventType;
@@ -40,7 +40,10 @@ const TransferRecap: FC<TransferProps> = ({
   const eventToDsiplay = parsedEvents[processedTrandsaction ? 1 : 0];
   const formatedDate = moment(eventToDsiplay.date).format('MMM Do YYYY');
 
-  const amountText = `${isReceiver ? '+' : '-'}${amount.toNumber()} ◎`;
+  const amountText = `${isReceiver ? '+' : '-'} ${getSolPrice(
+    amount.toNumber(),
+    2
+  )} ◎`;
 
   return (
     <li className={`flex ${isSelected ? 'selected-transaction' : ''}`}>

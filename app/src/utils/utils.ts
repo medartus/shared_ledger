@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 export const getWalletString = (
   wallet: PublicKey,
@@ -14,4 +14,10 @@ export const getWalletString = (
   return `${stranegrWalletStart}...${stranegrWalletEnd}`;
 };
 
-export const foo = () => {};
+export const getSolPrice = (
+  lamports: number,
+  precision: number | undefined = undefined
+) => {
+  if (!precision) return lamports / LAMPORTS_PER_SOL;
+  return Number((lamports / LAMPORTS_PER_SOL).toFixed(precision));
+};
