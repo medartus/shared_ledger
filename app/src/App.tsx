@@ -17,6 +17,8 @@ import TransactionsCreation from './components/TransactionCreation';
 import TransactionsViewer from './components/TransactionViewer';
 import { walletExists } from './lib/api';
 import CredentialModal from './modals/CredentialsModal';
+import Button from './components/Button';
+import TransactionSummary from './components/TransactionSummary';
 
 const sharedLedgerWrapper = new SharedLedgerWrapper();
 
@@ -135,15 +137,9 @@ const App = () => {
         </div>
         <div className="flex grow flex-row w-full">
           <div className="box-shadow md:block flex flex-col flex-grow w-full rounded-t-3xl md:rounded-3xl min-h-screen md:min-h-0 mt-5 md:m-5 md:max-w-md">
-            <div className="flex p-5 flex-row justify-between">
+            <div className="flex p-5 flex-row justify-between items-baseline">
               <h3 className="text-lg font-bold">Transactions</h3>
-              <button
-                className="text-lg font-bold"
-                type="button"
-                onClick={onDisplayCreation}
-              >
-                New
-              </button>
+              <Button onClick={onDisplayCreation}>New</Button>
             </div>
             {connected && transferRequets ? (
               <ul className="flex flex-col">
@@ -175,6 +171,14 @@ const App = () => {
                   onUpdateTransfers={onUpdateTransfers}
                 />
               ))}
+          </div>
+          <div className="hidden box-shadow xl:block p-5 flex w-full rounded-3xl min-h-0 m-5 xl:max-w-sm">
+            {transferRequets && publicKey && (
+              <TransactionSummary
+                transfers={transferRequets}
+                userPubKey={publicKey}
+              />
+            )}
           </div>
         </div>
       </div>

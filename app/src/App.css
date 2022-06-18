@@ -6,11 +6,11 @@
   background-color: #00dca3;
 }
 
-.bubble-creation {
-  background-color: #3d4c5c;
+.bubble-cancel {
+  background-color: #ef233c;
 }
 
-.bubble-cancel {
+.bubble-creation {
   background-color: #b7c6c4;
 }
 
@@ -28,19 +28,19 @@
 .arrow-up {
   width: 0;
   height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
 
-  border-bottom: 10px solid #fff;
+  border-bottom: 13px solid #fff;
 }
 
 .arrow-down {
   width: 0;
   height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
 
-  border-top: 10px solid #fff;
+  border-top: 13px solid #fff;
 }
 
 .animate-pulse {

@@ -17,6 +17,7 @@ import {
 } from '../modals/TransactionWrapper';
 import TransactionProgress from './TransactionProgress';
 import { getSolPrice, getWalletString } from '../utils/utils';
+import Button from './Button';
 
 const eventString = (eventType: EventType) => {
   switch (eventType) {
@@ -78,23 +79,15 @@ const TransactionActions: FC<TransactionActionsProps> = ({
   if (finalEvent.eventType === EventType.UNDEFINED) {
     if (isPayer) {
       return (
-        <button
-          type="button"
-          className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 md:ml-3 md:w-auto md:text-sm"
-          onClick={onProcessTransfer}
-        >
+        <Button fullwidth onClick={onProcessTransfer} color="blue">
           Pay
-        </button>
+        </Button>
       );
     }
     return (
-      <button
-        type="button"
-        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 md:ml-3 md:w-auto md:text-sm"
-        onClick={onCancelTransfer}
-      >
+      <Button fullwidth onClick={onCancelTransfer} color="red">
         Cancel
-      </button>
+      </Button>
     );
   }
   return <></>;
@@ -184,20 +177,16 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
         </ul>
       </div>
       <TransactionProgress events={parsedEvents} />
-      <div className="py-3 md:flex md:flex-row-reverse">
+      <div className="py-3 space-y-3 md:space-y-0 md:flex md:flex-row-reverse">
         <TransactionActions
           finalEvent={parsedEvents[1]}
           isPayer={isPayer}
           onCancelTransfer={onCancelTransfer}
           onProcessTransfer={onProcessTransfer}
         />
-        <button
-          type="button"
-          className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 md:mt-0 md:ml-3 md:w-auto md:text-sm"
-          onClick={onCloseViewer}
-        >
+        <Button fullwidth onClick={onCloseViewer}>
           Close
-        </button>
+        </Button>
       </div>
     </TransactionWrapperModal>
   );

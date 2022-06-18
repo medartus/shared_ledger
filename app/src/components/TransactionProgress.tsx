@@ -27,16 +27,16 @@ const TransactionProgress: FC<TransactionProgressProps> = ({ events }) => {
         <p>{transferStatus(finalEvent.eventType)}</p>
       </li>
       <div className="flex space-x-5 mt-2">
-        <span className="flex-grow h-2 rounded-sm bg-violet-400" />
+        <span className="flex-grow h-2 rounded-sm bg-green-400" />
         {finalEvent.eventType === EventType.UNDEFINED ? (
           <>
-            <span className="flex-grow h-2 rounded-sm bg-violet-400 animate-pulse" />
+            <span className="flex-grow h-2 rounded-sm bg-green-400 animate-pulse" />
             <span className="flex-grow h-2 rounded-sm bg-gray-300" />
           </>
         ) : (
           <>
-            <span className="flex-grow h-2 rounded-sm bg-violet-400" />
-            <span className="flex-grow h-2 rounded-sm bg-violet-400" />
+            <span className="flex-grow h-2 rounded-sm bg-green-400" />
+            <span className="flex-grow h-2 rounded-sm bg-green-400" />
           </>
         )}
       </div>

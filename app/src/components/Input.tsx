@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-type Props = {
+type InputProps = {
   id: string;
   inputType: string;
   label: string;
@@ -10,7 +10,7 @@ type Props = {
   onChange: React.ChangeEventHandler<HTMLInputElement> | undefined;
 };
 
-const Input: FC<Props> = ({
+const Input: FC<InputProps> = ({
   id,
   inputType,
   label,

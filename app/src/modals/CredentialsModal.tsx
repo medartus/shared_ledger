@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import ModalWrapper from './ModalWrapper';
 import Input from '../components/Input';
 import { SharedLedgerWrapper } from '../lib/shared_ledger';
+import Button from '../components/Button';
 
 type CredentialModalProps = {
   sharedLedgerWrapper: SharedLedgerWrapper;
@@ -83,13 +84,9 @@ const CredentialModal: FC<CredentialModalProps> = ({
         />
       </div>
       <div className="py-3 md:flex md:flex-row-reverse">
-        <button
-          type="button"
-          className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 md:ml-3 md:w-auto md:text-sm"
-          onClick={onSubmitEmail}
-        >
+        <Button onClick={onSubmitEmail} fullwidth color="red">
           Submit
-        </button>
+        </Button>
       </div>
     </ModalWrapper>
   );

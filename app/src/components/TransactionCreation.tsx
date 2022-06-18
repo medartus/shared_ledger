@@ -6,6 +6,7 @@ import {
   TransactionWrapperModal,
   TransactionWrapperTitle,
 } from '../modals/TransactionWrapper';
+import Button from './Button';
 import Input from './Input';
 
 type TransactionsCreationProps = {
@@ -35,7 +36,6 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
       ...prev,
       [name]: value,
     }));
-    console.log(inputValue);
   };
 
   const onValidateRequest = () => {
@@ -97,21 +97,15 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
             onChange={handleChange}
           />
         </div>
-        <div className="py-3 md:flex md:flex-row-reverse">
-          <button
-            type="button"
-            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 md:ml-3 md:w-auto md:text-sm"
-            onClick={onCreateTransferRequest}
-          >
+        <div className="py-3 space-y-3 md:space-y-0 md:flex md:flex-row-reverse">
+          <Button fullwidth color="green" onClick={onCreateTransferRequest}>
             Create
-          </button>
-          <button
-            type="button"
-            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 md:mt-0 md:ml-3 md:w-auto md:text-sm md:hidden"
-            onClick={onCloseModal}
-          >
-            Close
-          </button>
+          </Button>
+          <div className="md:hidden">
+            <Button fullwidth onClick={onCloseModal}>
+              Close
+            </Button>
+          </div>
         </div>
       </form>
     </TransactionWrapperModal>

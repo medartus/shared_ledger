@@ -11,11 +11,19 @@ import {
 import { getSolPrice, getWalletString } from '../utils/utils';
 
 type TransactionBubbleProps = {
+  isReceiver: boolean;
   eventType: EventType;
 };
 
-const TransactionBubble: FC<TransactionBubbleProps> = ({ eventType }) => (
-  <div className={`transaction-bubble bubble-${eventType.toString()}`} />
+const TransactionBubble: FC<TransactionBubbleProps> = ({
+  isReceiver,
+  eventType,
+}) => (
+  <div className={`flex transaction-bubble bubble-${eventType.toString()}`}>
+    <div className="flex h-full justify-center items-center">
+      <div className={`arrow-${isReceiver ? 'up' : 'down'}`} />
+    </div>
+  </div>
 );
 
 type TransferProps = {
@@ -31,7 +39,7 @@ const TransferRecap: FC<TransferProps> = ({
 }) => {
   const { from, to, events, amount, topic } = transfer;
   const { publicKey } = useWallet();
-  const isReceiver = to === publicKey;
+  const isReceiver = publicKey ? to.equals(publicKey) : false;
   const strangerWallet = getWalletString(isReceiver ? from : to, true);
 
   const parsedEvents = parseEvents(events);
@@ -52,7 +60,10 @@ const TransferRecap: FC<TransferProps> = ({
         type="button"
         onClick={onClick}
       >
-        <TransactionBubble eventType={eventToDsiplay.eventType} />
+        <TransactionBubble
+          eventType={eventToDsiplay.eventType}
+          isReceiver={isReceiver}
+        />
         <div className="pl-5 flex flex-1 flex-col">
           <div className="flex flex-row justify-between">
             <p>{topic}</p>
