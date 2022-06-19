@@ -1,4 +1,4 @@
-import functions from 'firebase-functions';
+import * as functions from 'firebase-functions';
 import { createTransport, Transporter } from 'nodemailer';
 import Mail = require('nodemailer/lib/mailer');
 import SMTPTransport = require('nodemailer/lib/smtp-transport');

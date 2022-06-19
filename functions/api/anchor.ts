@@ -1,4 +1,5 @@
-import anchor, { Program, Idl, Wallet } from '@project-serum/anchor';
+import * as anchor from '@project-serum/anchor';
+import { Program, Idl, Wallet } from '@project-serum/anchor';
 import { ConfirmOptions, Connection } from '@solana/web3.js';
 
 const connectionsOptions = {

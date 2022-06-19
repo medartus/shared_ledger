@@ -1,5 +1,4 @@
-import functions from 'firebase-functions';
-
+import * as functions from 'firebase-functions';
 import Base64 from 'crypto-js/enc-base64';
 import sha256 from 'crypto-js/sha256';
 import { PublicKey } from '@solana/web3.js';

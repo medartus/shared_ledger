@@ -1,4 +1,5 @@
-import anchor, { Program } from '@project-serum/anchor';
+import * as anchor from '@project-serum/anchor';
+import { Program } from '@project-serum/anchor';
 import { AnchorWallet } from '@solana/wallet-adapter-react';
 import { ConfirmOptions, Connection } from '@solana/web3.js';
 
