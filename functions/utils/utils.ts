@@ -1,7 +1,8 @@
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import * as BN from "bn.js";
+import functions from 'firebase-functions';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
 
-const WEBSITE_URL = "http://localhost:3000";
+const WEBSITE_URL = functions.config().website.url;
 
 export const getSolPrice = (
   lamports: BN,

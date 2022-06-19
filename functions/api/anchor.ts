@@ -1,9 +1,8 @@
-import * as anchor from "@project-serum/anchor";
-import { Program, Idl, Wallet } from "@project-serum/anchor";
-import { ConfirmOptions, Connection } from "@solana/web3.js";
+import anchor, { Program, Idl, Wallet } from '@project-serum/anchor';
+import { ConfirmOptions, Connection } from '@solana/web3.js';
 
 const connectionsOptions = {
-  preflightCommitment: "processed" as ConfirmOptions,
+  preflightCommitment: 'processed' as ConfirmOptions,
 };
 
 const getConnectionProvider = (wallet: Wallet, connection: Connection) =>

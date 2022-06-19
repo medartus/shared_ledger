@@ -1,18 +1,24 @@
-import * as functions from "firebase-functions";
+import functions from 'firebase-functions';
 
-import * as Base64 from "crypto-js/enc-base64";
-import * as sha256 from "crypto-js/sha256";
-import { PublicKey } from "@solana/web3.js";
-import * as cors from "cors";
+import Base64 from 'crypto-js/enc-base64';
+import sha256 from 'crypto-js/sha256';
+import { PublicKey } from '@solana/web3.js';
+import cors from 'cors';
 
-import { MailProvider } from "./mailProvider";
-import * as db from "../api/db";
+import MailProvider from './mailProvider';
+import {
+  NotifcationStatus,
+  getNotificationStatus,
+  getCrendentials,
+  setCrendentials,
+  setNotificationStatus,
+} from '../api/db';
 import {
   EventType,
   parseEvents,
   SharedLedgerWrapper,
-} from "../api/shared_ledger";
-import { getSolPrice, getTransactionUrl } from "../utils/utils";
+} from '../api/shared_ledger';
+import { getSolPrice, getTransactionUrl } from '../utils/utils';
 
 const sharedLedgerWrapper = new SharedLedgerWrapper();
 sharedLedgerWrapper.initialize();
@@ -23,18 +29,22 @@ const errorFormat = (message: string) => ({
   },
 });
 
-const corsHandler = cors({ origin: true });
+const corsHandler = cors({
+  origin: functions.config().website.isLocal
+    ? true
+    : functions.config().website.url,
+});
 
 export const walletExists = functions.https.onRequest((request, response) => {
   corsHandler(request, response, async () => {
     const { walletPubkey } = request.body;
 
     if (!walletPubkey) {
-      response.status(400).send(errorFormat("Missing valid parameter"));
+      response.status(400).send(errorFormat('Missing valid parameter'));
       return;
     }
 
-    db.getCrendentials(walletPubkey)
+    getCrendentials(walletPubkey)
       .then((credential) => response.sendStatus(credential.exists ? 200 : 204))
       .catch(() => response.sendStatus(500));
   });
@@ -47,7 +57,7 @@ export const verifyTransaction = functions.https.onRequest(
       const hashedEmail = Base64.stringify(sha256(uuid + data));
 
       if (!pubkey || !data || !uuid) {
-        response.status(400).send(errorFormat("Missing valid parameter"));
+        response.status(400).send(errorFormat('Missing valid parameter'));
         return;
       }
 
@@ -58,21 +68,19 @@ export const verifyTransaction = functions.https.onRequest(
 
       if (notifCrendentials.length > 0) {
         switch (Object.keys(notifCrendentials[0].account.content)[0]) {
-          case "email":
-            await db.setCrendentials(notifCrendentials[0].account.owner, {
+          case 'email':
+            await setCrendentials(notifCrendentials[0].account.owner, {
               email: data,
             });
             response.sendStatus(201);
             break;
           default:
-            response.status(500).send(errorFormat("Credential type not found"));
-            return;
+            response.status(500).send(errorFormat('Credential type not found'));
         }
       } else {
         response
           .status(500)
-          .send(errorFormat("No signed crendential found on chain"));
-        return;
+          .send(errorFormat('No signed crendential found on chain'));
       }
     });
   }
@@ -84,7 +92,7 @@ export const sendNotification = functions.https.onRequest(
       const { transactionUuid } = request.body;
 
       if (!transactionUuid) {
-        response.status(400).send(errorFormat("Missing valid parameter"));
+        response.status(400).send(errorFormat('Missing valid parameter'));
         return;
       }
 
@@ -96,26 +104,24 @@ export const sendNotification = functions.https.onRequest(
         response
           .status(400)
           .send(
-            errorFormat("No Transfer Request associated with this identifier")
+            errorFormat('No Transfer Request associated with this identifier')
           );
         return;
       }
 
-      const notificationSnapshot = await db.getNotificationStatus(
-        transactionUuid
-      );
+      const notificationSnapshot = await getNotificationStatus(transactionUuid);
       const notificationData = notificationSnapshot.data();
       if (
-        notificationData?.processStatus == db.NotifcationStatus.NOTIFIED ||
-        notificationData?.processStatus == db.NotifcationStatus.PROCESSING
+        notificationData?.processStatus === NotifcationStatus.NOTIFIED ||
+        notificationData?.processStatus === NotifcationStatus.PROCESSING
       ) {
-        response.status(400).send(errorFormat("User already notified"));
+        response.status(400).send(errorFormat('User already notified'));
         return;
       }
 
-      await db.setNotificationStatus(
+      await setNotificationStatus(
         transactionUuid,
-        db.NotifcationStatus.PROCESSING
+        NotifcationStatus.PROCESSING
       );
 
       const { from, events } = transfers[0].account;
@@ -126,15 +132,14 @@ export const sendNotification = functions.https.onRequest(
       if (finalEvent.eventType !== EventType.UNDEFINED) {
         response
           .status(400)
-          .send(errorFormat("Notifiy only created transfer request"));
+          .send(errorFormat('Notifiy only created transfer request'));
         return;
       }
 
-      const snapshot = await db.getCrendentials(from);
+      const snapshot = await getCrendentials(from);
       const data = snapshot.data();
       if (!data) {
         response.status(400).send(errorFormat("User can't be notified"));
-        return;
       } else {
         const { email } = data;
 
@@ -152,18 +157,18 @@ export const sendNotification = functions.https.onRequest(
             transactionUrl
           )
           .then(async () => {
-            await db.setNotificationStatus(
+            await setNotificationStatus(
               transactionUuid,
-              db.NotifcationStatus.NOTIFIED
+              NotifcationStatus.NOTIFIED
             );
             response.sendStatus(200);
           })
           .catch(async (err) => {
             functions.logger.error(err);
             response.sendStatus(500);
-            await db.setNotificationStatus(
+            await setNotificationStatus(
               transactionUuid,
-              db.NotifcationStatus.ERROR
+              NotifcationStatus.ERROR
             );
           });
       }

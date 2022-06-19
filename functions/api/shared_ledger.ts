@@ -1,19 +1,19 @@
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { Program, Wallet } from "@project-serum/anchor";
-import * as bs58 from "bs58";
-import * as BN from "bn.js";
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { Program, Wallet } from '@project-serum/anchor';
+import bs58 from 'bs58';
+import BN from 'bn.js';
 
-import getProgram from "./anchor";
-import { IDL, SharedLedger } from "../../target/types/shared_ledger";
+import getProgram from './anchor';
+import { IDL, SharedLedger } from '../../target/types/shared_ledger';
 
 const PROGRAM_ID = new PublicKey(
-  "27b22Rj4yVNXM1vEdh65LJ2HsfbmWwBeoncMEFd14bhL"
+  '27b22Rj4yVNXM1vEdh65LJ2HsfbmWwBeoncMEFd14bhL'
 );
 
 enum NETWORK {
-  LOCALHOST = "http://127.0.0.1:8899",
-  DEVNET = "https://api.devnet.solana.com",
-  MAINNET = "https://api.mainnet-beta.solana.com",
+  LOCALHOST = 'http://127.0.0.1:8899',
+  DEVNET = 'https://api.devnet.solana.com',
+  MAINNET = 'https://api.mainnet-beta.solana.com',
 }
 
 const signedTransactionOwnerFilter = (pubkey: PublicKey) => ({
@@ -55,7 +55,7 @@ export class SharedLedgerWrapper {
   }
 
   initialize = async () => {
-    const connection = new Connection(NETWORK.DEVNET.toString(), "processed");
+    const connection = new Connection(NETWORK.DEVNET.toString(), 'processed');
     const program = await getProgram(this.wallet, connection, PROGRAM_ID, IDL);
     this.program = program as unknown as Program<SharedLedger>;
   };
@@ -108,23 +108,23 @@ export type TransactionEventParsed = {
 };
 
 export enum EventType {
-  UNDEFINED = "undefined",
-  CREATION = "creation",
-  CANCEL = "cancel",
-  TRANSFER = "transfer",
+  UNDEFINED = 'undefined',
+  CREATION = 'creation',
+  CANCEL = 'cancel',
+  TRANSFER = 'transfer',
 }
 
 const parseEvent = (event: TransactionEvent) => {
   let eventType = EventType.UNDEFINED;
 
   switch (Object.keys(event.eventType)[0]) {
-    case "creation":
+    case 'creation':
       eventType = EventType.CREATION;
       break;
-    case "transfer":
+    case 'transfer':
       eventType = EventType.TRANSFER;
       break;
-    case "cancel":
+    case 'cancel':
       eventType = EventType.CANCEL;
       break;
     default:

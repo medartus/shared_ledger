@@ -1,5 +1,8 @@
 {
+  "compilerOptions": {
+    "skipLibCheck": true,
+  },
   "include": [
-    ".eslintrc.js"
+    ".eslintrc"
   ]
 }
