@@ -35,7 +35,7 @@ export const walletExists = functions.https.onCall((data) => {
 
 export const verifyTransaction = functions.https.onCall(async (data) => {
   const { pubkey, credential, uuid } = data;
-  const hashedEmail = Base64.stringify(sha256(uuid + data));
+  const hashedEmail = Base64.stringify(sha256(uuid + credential));
 
   if (!pubkey || !credential || !uuid) {
     throw new Error('Missing valid parameter');
@@ -116,7 +116,7 @@ export const sendNotification = functions.https.onCall(async (data) => {
       transactionUrl
     );
 
-    setNotificationStatus(transactionUuid, NotifcationStatus.NOTIFIED);
+    return setNotificationStatus(transactionUuid, NotifcationStatus.NOTIFIED);
   } catch (error) {
     setNotificationStatus(transactionUuid, NotifcationStatus.ERROR);
     throw new Error("Can't send Email");

@@ -32,11 +32,13 @@ const CredentialModal: FC<CredentialModalProps> = ({
   };
 
   const onSubmitEmail = () => {
-    toast.promise(sharedLedgerWrapper.createCredential(email), {
-      pending: 'Pending credential creation ...',
-      success: 'Sucessful credential creation',
-      error: 'Impossible credential creation',
-    });
+    toast
+      .promise(sharedLedgerWrapper.createCredential(email), {
+        pending: 'Pending credential creation ...',
+        success: 'Sucessful credential creation',
+        error: 'Impossible credential creation',
+      })
+      .then(onClose);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
