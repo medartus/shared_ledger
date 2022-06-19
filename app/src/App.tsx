@@ -71,8 +71,8 @@ const App = () => {
 
   useEffect(() => {
     if (publicKey) {
-      walletExists(publicKey).then((res) => {
-        setIsKnowUser(res.status === 200);
+      walletExists(publicKey).then(({ data }) => {
+        setIsKnowUser(data.walletExists);
       });
     }
   }, [publicKey]);
