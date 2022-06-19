@@ -1,7 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import axios from 'axios';
 
-const API_ADDRESS = 'http://localhost:5001';
+const BACKEND_API_ADDRESS = process.env.REACT_APP_BACKEND_API_ADDRESS;
+console.log(BACKEND_API_ADDRESS);
 
 export enum ApiEndpoint {
   VERIFY_TRANSCATION,
@@ -12,11 +13,11 @@ export enum ApiEndpoint {
 export const getEndpoint = (endpointType: ApiEndpoint) => {
   switch (endpointType) {
     case ApiEndpoint.VERIFY_TRANSCATION:
-      return `${API_ADDRESS}/shared-w3-ledger/us-central1/verifyTransaction`;
+      return `${BACKEND_API_ADDRESS}/shared-w3-ledger/us-central1/verifyTransaction`;
     case ApiEndpoint.WALLET_EXISTS:
-      return `${API_ADDRESS}/shared-w3-ledger/us-central1/walletExists`;
+      return `${BACKEND_API_ADDRESS}/shared-w3-ledger/us-central1/walletExists`;
     case ApiEndpoint.SEND_NOTIFICATION:
-      return `${API_ADDRESS}/shared-w3-ledger/us-central1/sendNotification`;
+      return `${BACKEND_API_ADDRESS}/shared-w3-ledger/us-central1/sendNotification`;
     default:
       return '';
   }
