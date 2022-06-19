@@ -13,11 +13,11 @@ export enum ApiEndpoint {
 export const getEndpoint = (endpointType: ApiEndpoint) => {
   switch (endpointType) {
     case ApiEndpoint.VERIFY_TRANSCATION:
-      return `${BACKEND_API_ADDRESS}/shared-w3-ledger/us-central1/verifyTransaction`;
+      return `${BACKEND_API_ADDRESS}/verifyTransaction`;
     case ApiEndpoint.WALLET_EXISTS:
-      return `${BACKEND_API_ADDRESS}/shared-w3-ledger/us-central1/walletExists`;
+      return `${BACKEND_API_ADDRESS}/walletExists`;
     case ApiEndpoint.SEND_NOTIFICATION:
-      return `${BACKEND_API_ADDRESS}/shared-w3-ledger/us-central1/sendNotification`;
+      return `${BACKEND_API_ADDRESS}/sendNotification`;
     default:
       return '';
   }
