@@ -1,7 +1,4 @@
 {
-  "compilerOptions": {
-    "skipLibCheck": true,
-  },
   "include": [
     ".eslintrc"
   ]

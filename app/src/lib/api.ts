@@ -11,8 +11,8 @@ export const verifyCredentials = (
     functions,
     'verifyTransaction'
   )({
-    data: credential,
-    pubkey,
+    credential,
+    pubkey: pubkey.toString(),
     uuid,
   });
 
@@ -31,5 +31,5 @@ export const sendNotification = (transactionUuid: PublicKey) =>
     functions,
     'sendNotification'
   )({
-    transactionUuid,
+    transactionUuid: transactionUuid.toString(),
   });
