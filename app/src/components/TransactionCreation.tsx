@@ -48,7 +48,7 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
       .promise(
         sharedLedgerWrapper.createTransferRequest(
           topic,
-          parseInt(amount, 10) * LAMPORTS_PER_SOL,
+          parseFloat(amount) * LAMPORTS_PER_SOL,
           new PublicKey(payerWallet)
         ),
         {
