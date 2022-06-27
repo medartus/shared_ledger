@@ -120,65 +120,65 @@ const App = () => {
           isKnownUser={isKnownUser}
         />
       )}
-      <div className="flex flex-col items-center h-screen">
-        <div className="flex flex-col md:flex-row items-center md:justify-around pt-5 md:w-full">
-          <div className="flex flex-col items-center">
-            <h1 className="font-bold text-4xl md:text-5xl">Shared Ledger</h1>
-            <h2 className="text-xl py-3">A refund has never been easier!</h2>
-          </div>
-          <div className="p-5 max-w-sm">
-            <p className="text-center">
-              Just enter the wallet with the amount and we inform your friend of
-              the reimbursement request.
-            </p>
-            <p className="text-center">Everything in one click!</p>
-          </div>
-          <WalletMultiButton />
-        </div>
-        <div className="flex grow flex-row w-full">
-          <div className="box-shadow md:block flex flex-col flex-grow w-full rounded-t-3xl md:rounded-3xl min-h-screen md:min-h-0 mt-5 md:m-5 md:max-w-md">
-            <div className="flex p-5 flex-row justify-between items-baseline">
-              <h3 className="text-lg font-bold">Transactions</h3>
-              <Button onClick={onDisplayCreation}>New</Button>
+      <div className="xl:container xl:mx-auto">
+        <div className="flex flex-col items-center h-screen">
+          <div className="flex flex-col md:flex-row items-center md:justify-between pt-5 md:px-10 md:w-full">
+            <div className="flex flex-col items-center">
+              <h1 className="font-bold text-4xl md:text-5xl">Shared Ledger</h1>
+              <h2 className="text-xl py-3">A refund has never been easier!</h2>
             </div>
-            {connected && transferRequets ? (
-              <ul className="flex flex-col">
-                <TransactionsRecap
+            <div className="flex flex-col items-center">
+              <WalletMultiButton />
+              <h2 className="text-lg py-2">Only on Devnet</h2>
+            </div>
+          </div>
+          <div className="flex grow flex-row w-full">
+            <div className="box-shadow md:block flex flex-col flex-grow w-full rounded-t-3xl md:rounded-3xl min-h-screen md:min-h-0 mt-5 md:m-5 md:max-w-md">
+              <div className="flex p-5 flex-row justify-between items-baseline">
+                <h3 className="text-lg font-bold">Transactions</h3>
+                <div className="md:hidden">
+                  <Button onClick={onDisplayCreation}>New</Button>
+                </div>
+              </div>
+              {connected && transferRequets ? (
+                <ul className="flex flex-col">
+                  <TransactionsRecap
+                    transfers={transferRequets}
+                    selectedTransfer={selectedTransfer}
+                    onSelectTransfer={onSelectTransfer}
+                  />
+                </ul>
+              ) : null}
+            </div>
+            <div className="box-shadow hidden md:block p-5 flex flex-grow w-full rounded-t-3xl md:rounded-3xl min-h-screen md:min-h-0 mt-5 md:m-5">
+              {connected &&
+                publicKey &&
+                initializedProgram &&
+                (selectedTransfer ? (
+                  <TransactionsViewer
+                    transfer={selectedTransfer.account}
+                    sharedLedgerWrapper={sharedLedgerWrapper}
+                    userPubKey={publicKey}
+                    onCloseViewer={onClearViewer}
+                    onUpdateTransfers={onUpdateTransfers}
+                  />
+                ) : (
+                  <TransactionsCreation
+                    sharedLedgerWrapper={sharedLedgerWrapper}
+                    isVisible={isCreationModalVisible}
+                    onCloseModal={onCloseCreationModal}
+                    onUpdateTransfers={onUpdateTransfers}
+                  />
+                ))}
+            </div>
+            <div className="hidden box-shadow lg:block p-5 flex w-full rounded-3xl m-5 lg:max-w-sm">
+              {transferRequets && publicKey && (
+                <TransactionSummary
                   transfers={transferRequets}
-                  selectedTransfer={selectedTransfer}
-                  onSelectTransfer={onSelectTransfer}
-                />
-              </ul>
-            ) : null}
-          </div>
-          <div className="box-shadow hidden md:block p-5 flex flex-grow w-full rounded-t-3xl md:rounded-3xl min-h-screen md:min-h-0 mt-5 md:m-5">
-            {connected &&
-              publicKey &&
-              initializedProgram &&
-              (selectedTransfer ? (
-                <TransactionsViewer
-                  transfer={selectedTransfer.account}
-                  sharedLedgerWrapper={sharedLedgerWrapper}
                   userPubKey={publicKey}
-                  onCloseViewer={onClearViewer}
-                  onUpdateTransfers={onUpdateTransfers}
                 />
-              ) : (
-                <TransactionsCreation
-                  sharedLedgerWrapper={sharedLedgerWrapper}
-                  isVisible={isCreationModalVisible}
-                  onCloseModal={onCloseCreationModal}
-                  onUpdateTransfers={onUpdateTransfers}
-                />
-              ))}
-          </div>
-          <div className="hidden box-shadow xl:block p-5 flex w-full rounded-3xl min-h-0 m-5 xl:max-w-sm">
-            {transferRequets && publicKey && (
-              <TransactionSummary
-                transfers={transferRequets}
-                userPubKey={publicKey}
-              />
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

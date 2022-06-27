@@ -66,7 +66,7 @@ const TransferRecap: FC<TransferProps> = ({
         />
         <div className="pl-5 flex flex-1 flex-col">
           <div className="flex flex-row justify-between">
-            <p>{topic}</p>
+            <p className="font-medium">{topic}</p>
             <p>{amountText}</p>
           </div>
           <div className="flex flex-row justify-between">

@@ -43,21 +43,46 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
     onCloseModal();
   };
 
+  const isValidInputRequest = (): boolean => {
+    if (topic === '') {
+      toast.error("Topic can't be empty");
+    } else if (amount === '') {
+      toast.error("Amount can't be empty");
+    } else if (payerWallet === '') {
+      toast.error("Payer wallet can't be empty");
+    } else if (topic.length > 50) {
+      toast.error("Topic can't be more than 50 characters long");
+    } else if (parseFloat(amount) > 0) {
+      toast.error("Amount can't be negative");
+    } else {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const test = new PublicKey(payerWallet);
+      } catch (error) {
+        toast.error('Payer wallet must be a valib public key');
+      }
+      return true;
+    }
+    return false;
+  };
+
   const onCreateTransferRequest = async () => {
-    toast
-      .promise(
-        sharedLedgerWrapper.createTransferRequest(
-          topic,
-          parseFloat(amount) * LAMPORTS_PER_SOL,
-          new PublicKey(payerWallet)
-        ),
-        {
-          pending: 'Pending transfer request creation ...',
-          success: 'Sucessful transfer request creation',
-          error: 'Impossible transfer request creation',
-        }
-      )
-      .then(onValidateRequest);
+    if (isValidInputRequest()) {
+      toast
+        .promise(
+          sharedLedgerWrapper.createTransferRequest(
+            topic,
+            parseFloat(amount) * LAMPORTS_PER_SOL,
+            new PublicKey(payerWallet)
+          ),
+          {
+            pending: 'Pending transfer request creation...',
+            success: 'Sucessful transfer request creation',
+            error: 'Impossible transfer request creation',
+          }
+        )
+        .then(onValidateRequest);
+    }
   };
 
   return (
@@ -92,7 +117,7 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
             inputType="text"
             name="payerWallet"
             label="Payer Wallet"
-            placeholder="Fu2dDKflEWilo52KropRRsu8oJHUQBkDUv7AnaQetC24B"
+            placeholder="DTGnpyywd9HBouJDaWD2ea5qrPDKmvD3KYCJBnHupset"
             value={payerWallet}
             onChange={handleChange}
           />

@@ -31,14 +31,24 @@ const CredentialModal: FC<CredentialModalProps> = ({
     setOpen(false);
   };
 
+  const isValidEmail = () =>
+    // eslint-disable-next-line
+    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+      email
+    );
+
   const onSubmitEmail = () => {
-    toast
-      .promise(sharedLedgerWrapper.createCredential(email), {
-        pending: 'Pending credential creation ...',
-        success: 'Sucessful credential creation',
-        error: 'Impossible credential creation',
-      })
-      .then(onClose);
+    if (isValidEmail()) {
+      toast
+        .promise(sharedLedgerWrapper.createCredential(email), {
+          pending: 'Pending account creation...',
+          success: 'Sucessful account creation',
+          error: 'Impossible account creation',
+        })
+        .then(onClose);
+    } else {
+      toast.error('Invalid email address');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,9 +66,9 @@ const CredentialModal: FC<CredentialModalProps> = ({
       onClose={onClose}
     >
       <div className="md:flex md:items-start">
-        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 md:mx-0 md:h-10 md:w-10">
+        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 md:mx-0 md:h-10 md:w-10">
           <InformationCircleIcon
-            className="h-6 w-6 text-red-600"
+            className="h-6 w-6 text-blue-600"
             aria-hidden="true"
           />
         </div>
@@ -86,7 +96,7 @@ const CredentialModal: FC<CredentialModalProps> = ({
         />
       </div>
       <div className="py-3 md:flex md:flex-row-reverse">
-        <Button onClick={onSubmitEmail} fullwidth color="red">
+        <Button onClick={onSubmitEmail} fullwidth color="blue">
           Submit
         </Button>
       </div>

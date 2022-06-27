@@ -98,27 +98,28 @@ export const sendNotification = functions.https.onCall(async (data) => {
   const snapshot = await getCrendentials(from);
   const snapshotData = snapshot.data();
   if (!snapshotData) {
-    throw new Error("User can't be notified");
-  }
-  const { email } = snapshotData;
+    functions.logger.error('No email is associated to that wallet');
+  } else {
+    const { email } = snapshotData;
 
-  const mailProvider = new MailProvider();
+    const mailProvider = new MailProvider();
 
-  const { amount, topic, uuid } = transfers[0].account;
-  const solAmount = getSolPrice(amount);
-  const transactionUrl = getTransactionUrl(uuid);
+    const { amount, topic, uuid } = transfers[0].account;
+    const solAmount = getSolPrice(amount);
+    const transactionUrl = getTransactionUrl(uuid);
 
-  try {
-    await mailProvider.sendTransactionRequest(
-      email as string,
-      solAmount.toString(),
-      topic,
-      transactionUrl
-    );
+    try {
+      await mailProvider.sendTransactionRequest(
+        email as string,
+        solAmount.toString(),
+        topic,
+        transactionUrl
+      );
 
-    return setNotificationStatus(transactionUuid, NotifcationStatus.NOTIFIED);
-  } catch (error) {
-    setNotificationStatus(transactionUuid, NotifcationStatus.ERROR);
-    throw new Error("Can't send Email");
+      return setNotificationStatus(transactionUuid, NotifcationStatus.NOTIFIED);
+    } catch (error) {
+      setNotificationStatus(transactionUuid, NotifcationStatus.ERROR);
+      functions.logger.error("Can't send Email to that user");
+    }
   }
 });

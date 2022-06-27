@@ -2,7 +2,6 @@ import React, { FC, useRef } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import moment from 'moment';
 import { toast } from 'react-toastify';
-import { useWindowWidth } from '@react-hook/window-size';
 
 import {
   EventType,
@@ -112,8 +111,6 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
   const parsedEvents = parseEvents(events);
   const isPayer = userPubKey.equals(transfer.from);
 
-  const windowWidth = useWindowWidth();
-  const shortenWallet = windowWidth <= 1024;
   const walletChars = 10;
 
   const onValidateRequest = () => {
@@ -124,7 +121,7 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
   const onCancelTransfer = () => {
     toast
       .promise(sharedLedgerWrapper.cancelTransferRequest(transfer), {
-        pending: 'Pending transfer request cancelation ...',
+        pending: 'Pending transfer request cancelation...',
         success: 'Sucessful transfer request cancelation',
         error: 'Impossible transfer request cancelation',
       })
@@ -134,7 +131,7 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
   const onProcessTransfer = () => {
     toast
       .promise(sharedLedgerWrapper.executeTransferRequest(transfer), {
-        pending: 'Pending transfer request payement ...',
+        pending: 'Pending transfer request payement...',
         success: 'Sucessful transfer request payement',
         error: 'Impossible transfer request payement',
       })
@@ -152,11 +149,11 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
         <ul>
           <TransactionInfo
             leftInfo="Payer:"
-            rightInfo={getWalletString(from, shortenWallet, walletChars)}
+            rightInfo={getWalletString(from, true, walletChars)}
           />
           <TransactionInfo
             leftInfo="Receiver:"
-            rightInfo={getWalletString(to, shortenWallet, walletChars)}
+            rightInfo={getWalletString(to, true, walletChars)}
           />
           <TransactionInfo
             leftInfo="Amount:"
@@ -166,7 +163,7 @@ const TransactionsViewer: FC<TransactionsViewerProps> = ({
       </div>
 
       <div className="py-2">
-        <p>Transfer History:</p>
+        <p className="font-semibold">Transfer History</p>
         <ul>
           {parsedEvents.map((event) => (
             <TransactionsEventRecap
