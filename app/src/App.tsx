@@ -112,7 +112,7 @@ const App = () => {
   };
 
   return (
-    <div className="App bg-white">
+    <div className="App">
       <ToastContainer />
       {isKnownUser !== undefined && (
         <CredentialModal
