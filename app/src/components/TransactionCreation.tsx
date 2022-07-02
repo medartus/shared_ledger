@@ -1,3 +1,4 @@
+import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import React, { FC, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -22,6 +23,7 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
   onCloseModal,
   onUpdateTransfers,
 }) => {
+  const { publicKey } = useWallet();
   const [inputValue, setInputValue] = useState({
     topic: '',
     payerWallet: '',
@@ -54,6 +56,8 @@ const TransactionsCreation: FC<TransactionsCreationProps> = ({
       toast.error("Topic can't be more than 50 characters long");
     } else if (parseFloat(amount) > 0) {
       toast.error("Amount can't be negative");
+    } else if (publicKey?.toString() !== payerWallet) {
+      toast.error("Can't use your wallet as payer");
     } else {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
